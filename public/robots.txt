@@ -1,0 +1,36 @@
+User-agent: *
+Allow: /
+
+# Разрешаем индексацию каталога и товаров
+Allow: /catalog
+Allow: /product/
+Allow: /category/
+
+# Запрещаем индексацию служебных страниц
+Disallow: /admin
+Disallow: /account
+Disallow: /api/
+Disallow: /cart
+Disallow: /checkout
+Disallow: /auth
+Disallow: /src/
+Disallow: /database/
+
+# Для Яндекса
+User-agent: Yandex
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Crawl-delay: 1
+
+# Для Google
+User-agent: Googlebot
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+# Указываем путь к sitemap
+Sitemap: <?php echo APP_URL; ?>/sitemap.xml
+
+# Host для Яндекса
+Host: pccomponents.local

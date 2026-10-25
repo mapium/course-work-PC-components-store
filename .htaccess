@@ -1,0 +1,13 @@
+RewriteEngine On
+RewriteBase /course-work-PC-components-store
+
+# Блокируем доступ к конфигам
+RewriteRule ^src/ - [F]
+RewriteRule ^database/ - [F]
+RewriteRule ^\.env$ - [F]
+
+# Перенаправляем все на index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+

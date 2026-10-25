@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http://localhost/course-work-PC-components-store/public/index.php)",
+      "Read(//var/log/**)",
+      "Read(//var/log/apache2/**)",
+      "Bash(curl -s -w \"\\\\nStatus: %{http_code}\\\\n\" http://localhost/course-work-PC-components-store/public/css/style.css)",
+      "Bash(curl -s \"http://localhost/course-work-PC-components-store/catalog\" -w \"\\\\nStatus: %{http_code}\\\\n\")",
+      "Bash(curl -s \"http://localhost/course-work-PC-components-store/cart\")",
+      "Bash(curl -s \"http://localhost/course-work-PC-components-store/auth\")",
+      "Bash(curl -s \"http://localhost/course-work-PC-components-store/category/motherboards\")",
+      "Bash(curl -v -X POST http://localhost/course-work-PC-components-store/auth -d 'action=register&email=test123@mail.com&username=test123&full_name=Test&password=123456&password_confirm=123456')",
+      "Bash(php *)"
+    ]
+  }
+}
