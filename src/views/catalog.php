@@ -40,6 +40,7 @@ $categories = $category_model->getAll();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="app-url" content="<?php echo APP_URL; ?>">
     <meta name="description" content="Каталог комплектующих для ПК - процессоры, видеокарты, материнские платы, оперативная память, накопители. Лучшие цены и быстрая доставка.">
     <meta name="keywords" content="каталог компьютерных комплектующих, купить процессор, купить видеокарту, SSD диски">
     <title>Каталог товаров - PCComponents Store</title>
@@ -156,5 +157,6 @@ $categories = $category_model->getAll();
     <footer>
         <p>&copy; 2026 PCComponents Store</p>
     </footer>
+    <script src="<?php echo \App\Helpers\Asset::js('main.js'); ?>"></script>
 </body>
 </html>

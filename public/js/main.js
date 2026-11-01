@@ -91,6 +91,56 @@ function setupCartFunctionality() {
     addToCartBtns.forEach(btn => {
         btn.addEventListener('click', addToCart);
     });
+
+    // Обработка форм добавления в корзину
+    const addToCartForms = document.querySelectorAll('.add-to-cart-form');
+    addToCartForms.forEach(form => {
+        form.addEventListener('submit', handleAddToCartForm);
+    });
+
+    // Обработка форм изменения количества в корзине
+    const quantityForms = document.querySelectorAll('.quantity-form');
+    quantityForms.forEach(form => {
+        form.addEventListener('submit', handleQuantityUpdate);
+    });
+
+    // Обработка форм удаления из корзины
+    const deleteForms = document.querySelectorAll('.delete-form');
+    deleteForms.forEach(form => {
+        form.addEventListener('submit', handleDeleteFromCart);
+    });
+}
+
+function handleAddToCartForm(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    const productId = formData.get('product_id');
+    const quantity = formData.get('quantity') || 1;
+
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            product_id: productId,
+            quantity: parseInt(quantity)
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Товар добавлен в корзину', 'success');
+            updateCartCount();
+        } else {
+            showNotification(data.message || 'Ошибка при добавлении товара', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Ошибка при добавлении товара', 'error');
+    });
 }
 
 function addToCart(e) {
@@ -98,7 +148,10 @@ function addToCart(e) {
     const productId = this.getAttribute('data-add-to-cart');
     const quantity = document.querySelector(`[data-quantity-${productId}]`)?.value || 1;
 
-    fetch('/api/cart/add', {
+    // Получаем базовый URL из мета-тега или используем пустую строку
+    const baseUrl = document.querySelector('meta[name="app-url"]')?.content || '';
+
+    fetch(baseUrl + '/api/cart/add', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -123,8 +176,100 @@ function addToCart(e) {
     });
 }
 
+function handleQuantityUpdate(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const formData = new FormData(form);
+    const newQuantity = parseInt(formData.get('quantity'));
+
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ quantity: newQuantity })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Перезагружаем страницу для обновления данных
+            location.reload();
+        } else {
+            showNotification(data.message || 'Ошибка при обновлении количества', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Ошибка при обновлении количества', 'error');
+    });
+}
+
+function updateCartSummary() {
+    const baseUrl = document.querySelector('meta[name="app-url"]')?.content || '';
+
+    fetch(baseUrl + '/api/cart/summary')
+        .then(response => response.json())
+        .then(data => {
+            // Обновляем значения в блоке итого
+            const subtotalEl = document.querySelector('.summary-row:nth-child(1) .summary-value');
+            const totalEl = document.querySelector('.summary-total .summary-value');
+
+            if (subtotalEl) {
+                subtotalEl.textContent = data.subtotal.toLocaleString('ru-RU') + ' ₽';
+            }
+            if (totalEl) {
+                totalEl.textContent = data.total.toLocaleString('ru-RU') + ' ₽';
+            }
+
+            // Обновляем счетчик товаров в хедере
+            updateCartCount();
+        })
+        .catch(error => {
+            console.error('Error updating summary:', error);
+        });
+}
+
+function handleDeleteFromCart(e) {
+    e.preventDefault();
+    const form = e.target;
+    const baseUrl = document.querySelector('meta[name="app-url"]')?.content || '';
+
+    // Извлекаем ID из action URL
+    const actionUrl = form.action;
+    const cartId = actionUrl.match(/\/api\/cart\/(\d+)/)?.[1];
+
+    if (!cartId) {
+        showNotification('Ошибка: не удалось определить ID товара', 'error');
+        return;
+    }
+
+    fetch(baseUrl + '/api/cart/' + cartId, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Товар удален из корзины', 'success');
+            // Перезагружаем страницу через небольшую задержку
+            setTimeout(() => location.reload(), 500);
+        } else {
+            showNotification(data.message || 'Ошибка при удалении товара', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Ошибка при удалении товара', 'error');
+    });
+}
+
 function updateCartCount() {
-    fetch('/api/cart/count')
+    const baseUrl = document.querySelector('meta[name="app-url"]')?.content || '';
+
+    fetch(baseUrl + '/api/cart/count')
         .then(response => response.json())
         .then(data => {
             const cartBadge = document.querySelector('[data-cart-count]');
@@ -218,5 +363,8 @@ document.head.appendChild(style);
 
 // Экспортируем функции в глобальный scope
 window.addToCart = addToCart;
+window.handleAddToCartForm = handleAddToCartForm;
+window.handleQuantityUpdate = handleQuantityUpdate;
+window.handleDeleteFromCart = handleDeleteFromCart;
 window.showNotification = showNotification;
 window.validateForm = validateForm;

@@ -1,12 +1,10 @@
 User-agent: *
 Allow: /
 
-# Разрешаем индексацию каталога и товаров
 Allow: /catalog
 Allow: /product/
 Allow: /category/
 
-# Запрещаем индексацию служебных страниц
 Disallow: /admin
 Disallow: /account
 Disallow: /api/
@@ -16,7 +14,6 @@ Disallow: /auth
 Disallow: /src/
 Disallow: /database/
 
-# Для Яндекса
 User-agent: Yandex
 Allow: /
 Disallow: /admin

@@ -24,7 +24,13 @@ class CartController {
             return;
         }
 
-        $data = json_decode(file_get_contents("php://input"), true);
+        // Поддержка как JSON, так и FormData
+        $content_type = $_SERVER['CONTENT_TYPE'] ?? '';
+        if (strpos($content_type, 'application/json') !== false) {
+            $data = json_decode(file_get_contents("php://input"), true);
+        } else {
+            $data = $_POST;
+        }
 
         $product_id = $data['product_id'] ?? null;
         $quantity = $data['quantity'] ?? 1;
@@ -133,10 +139,11 @@ class CartController {
 
         $data = json_decode(file_get_contents("php://input"), true);
 
-        $cart_id = $data['cart_id'] ?? null;
+        // Получаем ID из URL параметра (установлен в index.php)
+        $cart_id = $_GET['id'] ?? null;
         $quantity = $data['quantity'] ?? 0;
 
-        if (!$cart_id || $quantity < 0) {
+        if (!$cart_id || $quantity < 1) {
             echo json_encode(['success' => false, 'message' => 'Invalid data']);
             return;
         }

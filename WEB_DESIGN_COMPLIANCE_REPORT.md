@@ -36,7 +36,7 @@ btn.addEventListener('keydown', function(e) {
 
 ---
 
-### 2. **Focus States (Фокус состояния)**
+### 2. **Focus States (Фокус состояния)**~
 
 #### ✅ Добавлено: focus-visible для всех интерактивных элементов
 **Файл:** `public/css/style.css`

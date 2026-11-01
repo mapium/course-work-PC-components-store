@@ -35,6 +35,7 @@ $pending_orders = count(array_filter($orders, function($o) { return $o['status']
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="app-url" content="<?php echo APP_URL; ?>">
     <meta name="description" content="Личный кабинет - управление заказами и профилем">
     <title>Личный кабинет - PCComponents Store</title>
     <link rel="stylesheet" href="<?php echo \App\Helpers\Asset::css('style.css'); ?>">
@@ -184,7 +185,7 @@ $pending_orders = count(array_filter($orders, function($o) { return $o['status']
                                         </div>
 
                                         <div class="order-footer">
-                                            <a href="<?php echo APP_URL; ?>/order/<?php echo $order['id']; ?>" class="btn btn-outline btn-sm">
+                                            <a href="<?php echo APP_URL; ?>/order-success?id=<?php echo $order['id']; ?>" class="btn btn-outline btn-sm">
                                                 Подробнее
                                             </a>
                                         </div>

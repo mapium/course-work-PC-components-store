@@ -34,6 +34,7 @@ if (!empty($reviews)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="app-url" content="<?php echo APP_URL; ?>">
     <title><?php echo htmlspecialchars($product['meta_title'] ?? $product['name'] . ' - купить в PCComponents Store'); ?></title>
     <meta name="description" content="<?php echo htmlspecialchars($product['meta_description'] ?? substr($product['description'], 0, 160)); ?>">
     <meta name="keywords" content="<?php echo htmlspecialchars($product['meta_keywords'] ?? $product['brand'] . ', ' . $product['name'] . ', купить'); ?>">
@@ -267,8 +268,9 @@ if (!empty($reviews)) {
                     <div class="products-grid">
                         <?php foreach ($similar_products as $similar): ?>
                             <div class="product-card">
+                                <a href="<?php echo APP_URL; ?>/product/<?php echo $product['id']; ?>" class="product-card-link">
                                 <img
-                                    src="<?php echo APP_URL; ?>/public/images/<?php echo htmlspecialchars($similar['main_image'] ?? 'placeholder.jpg'); ?>"
+                                    src="<?php echo APP_URL; ?>/public/images/products/<?php echo htmlspecialchars($similar['main_image'] ?? 'placeholder.jpg'); ?>"
                                     alt="<?php echo htmlspecialchars($similar['name']); ?>"
                                     class="product-image"
                                     loading="lazy"
@@ -280,6 +282,7 @@ if (!empty($reviews)) {
                                     <p class="product-price"><?php echo number_format($similar['price'], 0, '', ' '); ?> ₽</p>
                                     <p class="product-description"><?php echo htmlspecialchars(substr($similar['description'], 0, 100)); ?>…</p>
                                     <a href="<?php echo APP_URL; ?>/product/<?php echo $similar['id']; ?>" class="btn">Подробнее</a>
+                                    </a>
                                 </div>
                             </div>
                         <?php endforeach; ?>

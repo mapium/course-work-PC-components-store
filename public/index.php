@@ -139,6 +139,25 @@ if (strpos($path, '/api/') === 0) {
         exit;
     }
 
+    if ($path === '/api/orders/create' && $request_method === 'POST') {
+        $controller = new \App\Controllers\OrderController($pdo);
+        $controller->create();
+        exit;
+    }
+
+    if (preg_match('/^\/api\/orders\/(\d+)$/', $path, $matches)) {
+        $_GET['id'] = $matches[1];
+        $controller = new \App\Controllers\OrderController($pdo);
+        $controller->getById();
+        exit;
+    }
+
+    if ($path === '/api/orders/user' && $request_method === 'GET') {
+        $controller = new \App\Controllers\OrderController($pdo);
+        $controller->getUserOrders();
+        exit;
+    }
+
     header('HTTP/1.1 404 Not Found');
     echo json_encode(['success' => false, 'message' => 'API endpoint not found']);
     exit;
@@ -153,6 +172,10 @@ if ($path === '/') {
     include BASE_PATH . '/src/views/auth.php';
 } elseif ($path === '/cart') {
     include BASE_PATH . '/src/views/cart.php';
+} elseif ($path === '/checkout') {
+    include BASE_PATH . '/src/views/checkout.php';
+} elseif ($path === '/order-success') {
+    include BASE_PATH . '/src/views/order-success.php';
 } elseif ($path === '/logout') {
     $controller = new \App\Controllers\AuthController($pdo);
     $controller->logout();
@@ -176,5 +199,5 @@ if ($path === '/') {
     include BASE_PATH . '/src/views/category.php';
 } else {
     header('HTTP/1.1 404 Not Found');
-    echo '<h1>404 - Страница не найдена</h1>';
+    include BASE_PATH . '/src/views/404.php';
 }

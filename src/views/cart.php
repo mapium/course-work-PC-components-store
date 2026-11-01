@@ -23,6 +23,7 @@ $total = $subtotal + $shipping;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="app-url" content="<?php echo APP_URL; ?>">
     <title>Корзина покупок - PCComponents Store</title>
     <link rel="stylesheet" href="<?php echo \App\Helpers\Asset::css('style.css'); ?>">
 </head>
@@ -59,7 +60,7 @@ $total = $subtotal + $shipping;
                             <?php foreach ($items as $item): ?>
                                 <div class="cart-item-card">
                                     <a href="<?php echo APP_URL; ?>/product/<?php echo $item['product_id']; ?>" class="cart-item-image-link">
-                                        <img src="<?php echo APP_URL; ?>/public/images/<?php echo htmlspecialchars($item['main_image'] ?? 'placeholder.jpg'); ?>"
+                                        <img src="<?php echo APP_URL; ?>/public/images/products/<?php echo htmlspecialchars($item['main_image'] ?? 'placeholder.jpg'); ?>"
                                              alt="<?php echo htmlspecialchars($item['name']); ?>"
                                              class="cart-item-image"
                                              loading="lazy"
@@ -104,7 +105,7 @@ $total = $subtotal + $shipping;
                                         </div>
 
                                         <form method="POST" action="<?php echo APP_URL; ?>/api/cart/<?php echo $item['id']; ?>/delete" class="delete-form">
-                                            <button type="submit" class="btn-icon btn-ghost btn-sm" aria-label="Удалить товар">
+                                            <button type="submit" class="btn-icon btn-outline btn-sm" aria-label="Удалить товар">
                                                 <img src="<?php echo APP_URL; ?>/public/images/icons/delete.svg" alt="" width="18" height="18">
                                             </button>
                                         </form>
@@ -154,5 +155,6 @@ $total = $subtotal + $shipping;
     </main>
 
     <?php include dirname(__FILE__) . '/includes/footer.php'; ?>
+    <script src="<?php echo \App\Helpers\Asset::js('main.js'); ?>"></script>
 </body>
 </html>

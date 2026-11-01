@@ -24,6 +24,7 @@ $products = $product_model->getByCategoryId($category['id']);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="app-url" content="<?php echo APP_URL; ?>">
     <title><?php echo htmlspecialchars($category['name']); ?> - PCComponents Store</title>
     <link rel="stylesheet" href="<?php echo \App\Helpers\Asset::css('style.css'); ?>">
 </head>

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="app-url" content="<?php echo APP_URL; ?>">
     <meta name="description" content="PCComponents Store - интернет-магазин комплектующих для ПК. Процессоры, видеокарты, материнские платы и другие компоненты по лучшим ценам.">
     <meta name="keywords" content="комплектующие ПК, купить процессор, видеокарта, материнская плата, SSD, оперативная память">
     <title>PCComponents Store - Комплектующие для ПК</title>

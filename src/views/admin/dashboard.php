@@ -32,6 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'brand' => $_POST['brand'] ?? null,
             'sku' => $_POST['sku'] ?? null,
             'description' => $_POST['description'] ?? null,
+            'main_image' => $_POST['main_image'] ?? null,
+            'is_active' => isset($_POST['is_active']) ? 1 : 0,
             'meta_title' => $_POST['meta_title'] ?? null,
             'meta_description' => $_POST['meta_description'] ?? null,
             'meta_keywords' => $_POST['meta_keywords'] ?? null
@@ -46,6 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             brand = :brand,
             sku = :sku,
             description = :description,
+            main_image = :main_image,
+            is_active = :is_active,
             meta_title = :meta_title,
             meta_description = :meta_description,
             meta_keywords = :meta_keywords,
@@ -61,6 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':brand' => $data['brand'],
             ':sku' => $data['sku'],
             ':description' => $data['description'],
+            ':main_image' => $data['main_image'],
+            ':is_active' => $data['is_active'],
             ':meta_title' => $data['meta_title'],
             ':meta_description' => $data['meta_description'],
             ':meta_keywords' => $data['meta_keywords']
@@ -102,6 +108,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'brand' => $_POST['brand'] ?? null,
             'sku' => $_POST['sku'] ?? null,
             'description' => $_POST['description'] ?? null,
+            'main_image' => $_POST['main_image'] ?? null,
+            'is_active' => isset($_POST['is_active']) ? 1 : 0,
             'meta_title' => $_POST['meta_title'] ?? null,
             'meta_description' => $_POST['meta_description'] ?? null,
             'meta_keywords' => $_POST['meta_keywords'] ?? null
@@ -109,10 +117,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $stmt = $pdo->prepare("INSERT INTO products (
             category_id, name, slug, price, old_price, stock, brand, sku,
-            description, meta_title, meta_description, meta_keywords, created_at
+            description, main_image, is_active, meta_title, meta_description, meta_keywords, created_at
         ) VALUES (
             :category_id, :name, :slug, :price, :old_price, :stock, :brand, :sku,
-            :description, :meta_title, :meta_description, :meta_keywords, NOW()
+            :description, :main_image, :is_active, :meta_title, :meta_description, :meta_keywords, NOW()
         )");
 
         $stmt->execute([
@@ -125,6 +133,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':brand' => $data['brand'],
             ':sku' => $data['sku'],
             ':description' => $data['description'],
+            ':main_image' => $data['main_image'],
+            ':is_active' => $data['is_active'],
             ':meta_title' => $data['meta_title'],
             ':meta_description' => $data['meta_description'],
             ':meta_keywords' => $data['meta_keywords']
@@ -156,6 +166,7 @@ $current_tab = $_GET['tab'] ?? 'dashboard';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="app-url" content="<?php echo APP_URL; ?>">
     <title>Админ-панель - PCComponents Store</title>
     <link rel="stylesheet" href="<?php echo \App\Helpers\Asset::css('style.css'); ?>">
 </head>
@@ -307,6 +318,44 @@ $current_tab = $_GET['tab'] ?? 'dashboard';
                                             <label>SKU</label>
                                             <input type="text" name="sku">
                                         </div>
+
+                                        <div class="form-group">
+                                            <label>
+                                                <input type="checkbox" name="is_active" value="1" checked>
+                                                Активен
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Главное изображение</label>
+                                        <div class="custom-select-wrapper">
+                                            <input type="hidden" name="main_image" id="selected-image-add" value="">
+                                            <div class="custom-select" onclick="toggleDropdown('dropdown-add')">
+                                                <div class="custom-select-trigger">
+                                                    <div class="selected-option" id="selected-option-add">
+                                                        <span class="placeholder">Выберите изображение</span>
+                                                    </div>
+                                                    <span class="arrow">▼</span>
+                                                </div>
+                                                <div class="custom-options" id="dropdown-add">
+                                                    <?php
+                                                    $images_dir = dirname(dirname(dirname(__DIR__))) . '/public/images/products/';
+                                                    $images = array_diff(scandir($images_dir), ['.', '..']);
+                                                    foreach ($images as $image):
+                                                        if (in_array(strtolower(pathinfo($image, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'gif', 'webp'])):
+                                                    ?>
+                                                        <div class="custom-option" onclick="selectImageOption('<?php echo htmlspecialchars($image, ENT_QUOTES); ?>', 'add', event)">
+                                                            <img src="<?php echo APP_URL; ?>/public/images/products/<?php echo htmlspecialchars($image); ?>" alt="">
+                                                            <span><?php echo htmlspecialchars($image); ?></span>
+                                                        </div>
+                                                    <?php
+                                                        endif;
+                                                    endforeach;
+                                                    ?>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div class="form-group">
@@ -376,6 +425,50 @@ $current_tab = $_GET['tab'] ?? 'dashboard';
                                         <div class="form-group">
                                             <label>SKU</label>
                                             <input type="text" name="sku" value="<?php echo htmlspecialchars($edit_product['sku'] ?? ''); ?>">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label>
+                                                <input type="checkbox" name="is_active" value="1" <?php echo $edit_product['is_active'] ? 'checked' : ''; ?>>
+                                                Активен
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Главное изображение</label>
+                                        <div class="custom-select-wrapper">
+                                            <input type="hidden" name="main_image" id="selected-image-edit" value="<?php echo htmlspecialchars($edit_product['main_image'] ?? ''); ?>">
+                                            <div class="custom-select" onclick="toggleDropdown('dropdown-edit')">
+                                                <div class="custom-select-trigger">
+                                                    <div class="selected-option" id="selected-option-edit">
+                                                        <?php if (!empty($edit_product['main_image'])): ?>
+                                                            <img src="<?php echo APP_URL; ?>/public/images/products/<?php echo htmlspecialchars($edit_product['main_image']); ?>" alt="">
+                                                            <span><?php echo htmlspecialchars($edit_product['main_image']); ?></span>
+                                                        <?php else: ?>
+                                                            <span class="placeholder">Выберите изображение</span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                    <span class="arrow">▼</span>
+                                                </div>
+                                                <div class="custom-options" id="dropdown-edit">
+                                                    <?php
+                                                    $images_dir = dirname(dirname(dirname(__DIR__))) . '/public/images/products/';
+                                                    $images = array_diff(scandir($images_dir), ['.', '..']);
+                                                    foreach ($images as $image):
+                                                        if (in_array(strtolower(pathinfo($image, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'gif', 'webp'])):
+                                                            $selected_class = ($edit_product['main_image'] ?? '') === $image ? 'selected' : '';
+                                                    ?>
+                                                        <div class="custom-option <?php echo $selected_class; ?>" onclick="selectImageOption('<?php echo htmlspecialchars($image, ENT_QUOTES); ?>', 'edit', event)">
+                                                            <img src="<?php echo APP_URL; ?>/public/images/products/<?php echo htmlspecialchars($image); ?>" alt="">
+                                                            <span><?php echo htmlspecialchars($image); ?></span>
+                                                        </div>
+                                                    <?php
+                                                        endif;
+                                                    endforeach;
+                                                    ?>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -564,5 +657,59 @@ $current_tab = $_GET['tab'] ?? 'dashboard';
     </main>
 
     <?php include dirname(dirname(__FILE__)) . '/includes/footer.php'; ?>
+
+    <script>
+    function toggleDropdown(dropdownId) {
+        const dropdown = document.getElementById(dropdownId);
+        const allDropdowns = document.querySelectorAll('.custom-options');
+
+        // Закрываем все другие дропдауны
+        allDropdowns.forEach(d => {
+            if (d.id !== dropdownId) {
+                d.classList.remove('open');
+            }
+        });
+
+        // Переключаем текущий
+        dropdown.classList.toggle('open');
+        event.stopPropagation();
+    }
+
+    function selectImageOption(imageName, formType, e) {
+        e.stopPropagation();
+
+        const hiddenInput = document.getElementById('selected-image-' + formType);
+        const selectedOption = document.getElementById('selected-option-' + formType);
+        const dropdown = document.getElementById('dropdown-' + formType);
+
+        // Обновляем скрытое поле
+        hiddenInput.value = imageName;
+
+        // Обновляем отображение выбранного элемента
+        selectedOption.innerHTML = `
+            <img src="<?php echo APP_URL; ?>/public/images/products/${encodeURIComponent(imageName)}" alt="">
+            <span>${imageName}</span>
+        `;
+
+        // Убираем класс selected со всех опций
+        const allOptions = dropdown.querySelectorAll('.custom-option');
+        allOptions.forEach(opt => opt.classList.remove('selected'));
+
+        // Добавляем класс selected к выбранной опции
+        e.currentTarget.classList.add('selected');
+
+        // Закрываем dropdown
+        dropdown.classList.remove('open');
+    }
+
+    // Закрытие dropdown при клике вне его
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.custom-select')) {
+            document.querySelectorAll('.custom-options').forEach(dropdown => {
+                dropdown.classList.remove('open');
+            });
+        }
+    });
+    </script>
 </body>
 </html>
