@@ -10,7 +10,146 @@ function initializeApp() {
     setupFormValidation();
     setupCartFunctionality();
     setupNotifications();
+    setupHeroCarousel();
     setupCategoriesCarousel();
+}
+
+// Hero-карусель
+function setupHeroCarousel() {
+    const carousel = document.querySelector('.hero-carousel');
+    if (!carousel) return;
+
+    const slides = carousel.querySelectorAll('[data-hero-slide]');
+    const prevBtn = carousel.querySelector('[data-hero-prev]');
+    const nextBtn = carousel.querySelector('[data-hero-next]');
+    const dots = carousel.querySelectorAll('[data-hero-dot]');
+
+    if (slides.length === 0) return;
+
+    let currentSlide = 0;
+    let autoplayInterval;
+    const autoplayDelay = 5000; // 5 секунд
+
+    function goToSlide(index) {
+        // Убираем активный класс со всех слайдов
+        slides.forEach((slide, i) => {
+            slide.classList.remove('is-active');
+            slide.setAttribute('aria-hidden', i !== index);
+        });
+
+        // Убираем активный класс со всех точек
+        dots.forEach(dot => {
+            dot.classList.remove('is-active');
+            dot.removeAttribute('aria-current');
+        });
+
+        // Активируем нужный слайд и точку
+        slides[index].classList.add('is-active');
+        slides[index].setAttribute('aria-hidden', 'false');
+
+        if (dots[index]) {
+            dots[index].classList.add('is-active');
+            dots[index].setAttribute('aria-current', 'true');
+        }
+
+        currentSlide = index;
+    }
+
+    function nextSlide() {
+        const next = (currentSlide + 1) % slides.length;
+        goToSlide(next);
+    }
+
+    function prevSlide() {
+        const prev = (currentSlide - 1 + slides.length) % slides.length;
+        goToSlide(prev);
+    }
+
+    function startAutoplay() {
+        stopAutoplay();
+        autoplayInterval = setInterval(nextSlide, autoplayDelay);
+    }
+
+    function stopAutoplay() {
+        if (autoplayInterval) {
+            clearInterval(autoplayInterval);
+            autoplayInterval = null;
+        }
+    }
+
+    // Обработчики кнопок
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            prevSlide();
+            stopAutoplay();
+            startAutoplay();
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            nextSlide();
+            stopAutoplay();
+            startAutoplay();
+        });
+    }
+
+    // Обработчики точек
+    dots.forEach((dot, index) => {
+        dot.addEventListener('click', () => {
+            goToSlide(index);
+            stopAutoplay();
+            startAutoplay();
+        });
+    });
+
+    // Останавливаем автоплей при наведении
+    carousel.addEventListener('mouseenter', stopAutoplay);
+    carousel.addEventListener('mouseleave', startAutoplay);
+
+    // Поддержка свайпов на мобильных
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    carousel.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+
+    carousel.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    });
+
+    function handleSwipe() {
+        const swipeThreshold = 50;
+        const diff = touchStartX - touchEndX;
+
+        if (Math.abs(diff) > swipeThreshold) {
+            if (diff > 0) {
+                nextSlide();
+            } else {
+                prevSlide();
+            }
+            stopAutoplay();
+            startAutoplay();
+        }
+    }
+
+    // Поддержка клавиатуры
+    carousel.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') {
+            prevSlide();
+            stopAutoplay();
+            startAutoplay();
+        } else if (e.key === 'ArrowRight') {
+            nextSlide();
+            stopAutoplay();
+            startAutoplay();
+        }
+    });
+
+    // Запускаем автоплей
+    startAutoplay();
 }
 
 // Карусель категорий
