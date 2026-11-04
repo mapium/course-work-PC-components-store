@@ -8,32 +8,63 @@ $pdo = $db->connect();
 $product_model = new \App\Models\Product($pdo);
 $category_model = new \App\Models\Category($pdo);
 
-// Получение фильтров
-$search = $_GET['search'] ?? '';
-$price_min = isset($_GET['price_min']) && is_numeric($_GET['price_min']) ? (int)$_GET['price_min'] : null;
-$price_max = isset($_GET['price_max']) && is_numeric($_GET['price_max']) ? (int)$_GET['price_max'] : null;
-$brand = $_GET['brand'] ?? '';
-$category_id = isset($_GET['category']) && is_numeric($_GET['category']) ? (int)$_GET['category'] : null;
+// Build filters array
+$filters = [];
+$has_filters = false;
 
-// Получение товаров
-if (!empty($search)) {
-    $products = $product_model->search($search, 50, 0);
+$search_query = is_string($_GET['search'] ?? null) ? trim($_GET['search']) : '';
+if ($search_query !== '') {
+    $filters['search'] = $search_query;
+    $has_filters = true;
+}
+
+if (isset($_GET['category']) && is_numeric($_GET['category'])) {
+    $filters['category_id'] = (int)$_GET['category'];
+    $has_filters = true;
+}
+
+if (isset($_GET['price_min']) && is_numeric($_GET['price_min']) && $_GET['price_min'] !== '') {
+    $filters['price_min'] = (float)$_GET['price_min'];
+    $has_filters = true;
+}
+
+if (isset($_GET['price_max']) && is_numeric($_GET['price_max']) && $_GET['price_max'] !== '') {
+    $filters['price_max'] = (float)$_GET['price_max'];
+    $has_filters = true;
+}
+
+if (isset($_GET['brand']) && !empty($_GET['brand'])) {
+    $filters['brand'] = $_GET['brand'];
+    $has_filters = true;
+}
+
+// Parse specification filters from GET parameters
+// Format: spec[Spec Name][]=Value1&spec[Spec Name][]=Value2
+if (isset($_GET['spec']) && is_array($_GET['spec'])) {
+    $specifications = [];
+    foreach ($_GET['spec'] as $spec_name => $spec_values) {
+        if (is_array($spec_values) && !empty($spec_values)) {
+            $specifications[$spec_name] = array_values($spec_values);
+        }
+    }
+    if (!empty($specifications)) {
+        $filters['specifications'] = $specifications;
+        $has_filters = true;
+    }
+}
+
+// Get products using new filtering method
+if ($has_filters) {
+    $products = $product_model->getWithFilters($filters, 100, 0);
 } else {
     $products = $product_model->getAll(50, 0);
 }
 
-// Применение фильтров
-if ($price_min !== null || $price_max !== null || !empty($brand) || $category_id !== null) {
-    $products = array_filter($products, function($product) use ($price_min, $price_max, $brand, $category_id) {
-        if ($price_min !== null && $product['price'] < $price_min) return false;
-        if ($price_max !== null && $product['price'] > $price_max) return false;
-        if (!empty($brand) && $product['brand'] !== $brand) return false;
-        if ($category_id !== null && $product['category_id'] !== $category_id) return false;
-        return true;
-    });
-}
-
 $categories = $category_model->getAll();
+$selected_category = $filters['category_id'] ?? null;
+$selected_brand = $filters['brand'] ?? '';
+$price_min = $filters['price_min'] ?? '';
+$price_max = $filters['price_max'] ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -80,83 +111,121 @@ $categories = $category_model->getAll();
     <main>
         <div class="container">
             <div class="catalog-wrapper">
-                <aside class="sidebar">
+                <aside class="sticky-aside sidebar">
                     <h3>Фильтры</h3>
-                    <form method="GET" class="filters">
+                    <form method="GET" id="catalog-filter-form" class="filters">
+                        <?php if ($search_query !== ''): ?>
+                            <input type="hidden" name="search" value="<?php echo htmlspecialchars($search_query, ENT_QUOTES, 'UTF-8'); ?>">
+                        <?php endif; ?>
+                        <!-- 1. Price Range (always visible, optional) -->
                         <div class="filter-group">
                             <label>Цена</label>
-                            <input type="number" name="price_min" placeholder="От" class="filter-input" value="<?php echo htmlspecialchars($price_min ?? ''); ?>">
-                            <input type="number" name="price_max" placeholder="До" class="filter-input" value="<?php echo htmlspecialchars($price_max ?? ''); ?>">
+                            <input type="number" name="price_min" placeholder="От" class="filter-input" value="<?php echo htmlspecialchars($price_min); ?>">
+                            <input type="number" name="price_max" placeholder="До" class="filter-input" value="<?php echo htmlspecialchars($price_max); ?>">
                         </div>
 
-                        <div class="filter-group">
-                            <label>Бренд</label>
-                            <select name="brand" class="filter-input">
-                                <option value="">Все бренды</option>
-                                <option value="Intel" <?php echo $brand === 'Intel' ? 'selected' : ''; ?>>Intel</option>
-                                <option value="AMD" <?php echo $brand === 'AMD' ? 'selected' : ''; ?>>AMD</option>
-                                <option value="NVIDIA" <?php echo $brand === 'NVIDIA' ? 'selected' : ''; ?>>NVIDIA</option>
-                                <option value="Corsair" <?php echo $brand === 'Corsair' ? 'selected' : ''; ?>>Corsair</option>
-                                <option value="Kingston" <?php echo $brand === 'Kingston' ? 'selected' : ''; ?>>Kingston</option>
-                                <option value="Samsung" <?php echo $brand === 'Samsung' ? 'selected' : ''; ?>>Samsung</option>
-                                <option value="ASUS" <?php echo $brand === 'ASUS' ? 'selected' : ''; ?>>ASUS</option>
-                            </select>
-                        </div>
-
+                        <!-- 2. Category (always visible, from database) -->
                         <div class="filter-group">
                             <label>Категория</label>
-                            <select name="category" class="filter-input">
-                                <option value="">Все категории</option>
+                            <select name="category" id="category-filter" class="filter-input">
+                                <option value="">Выберите категорию</option>
                                 <?php foreach ($categories as $cat): ?>
-                                    <option value="<?php echo $cat['id']; ?>" <?php echo $category_id === $cat['id'] ? 'selected' : ''; ?>><?php echo htmlspecialchars($cat['name']); ?></option>
+                                    <option value="<?php echo $cat['id']; ?>" <?php echo $selected_category === $cat['id'] ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($cat['name']); ?>
+                                    </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
 
-                        <button type="submit" class="btn">Применить фильтры</button>
+                        <!-- 3. Brand (hidden until category selected) -->
+                        <div id="brand-filter-container" class="filter-group" style="display: <?php echo $selected_category ? 'block' : 'none'; ?>;">
+                            <label>Производитель</label>
+                            <select name="brand" id="brand-filter" class="filter-input">
+                                <option value="">Все производители</option>
+                                <?php if ($selected_brand): ?>
+                                    <option value="<?php echo htmlspecialchars($selected_brand); ?>" selected><?php echo htmlspecialchars($selected_brand); ?></option>
+                                <?php endif; ?>
+                            </select>
+                        </div>
+
+                        <!-- 4. Dynamic Specification Filters (hidden until category selected) -->
+                        <div id="spec-filters-container" style="display: <?php echo $selected_category ? 'block' : 'none'; ?>;">
+                            <!-- Dynamically loaded specification filters will appear here -->
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Применить фильтры</button>
+                        <button type="button" id="reset-filters" class="btn btn-secondary" style="margin-top: 0.5rem; width: 100%;">Сбросить</button>
                     </form>
                 </aside>
 
                 <div class="products-section">
-                    <h1>Каталог товаров</h1>
+                    <h1><?php echo $search_query !== '' ? 'Результаты поиска' : 'Каталог товаров'; ?></h1>
+                    <?php if ($search_query !== ''): ?>
+                        <p class="catalog-search-query">По запросу «<?php echo htmlspecialchars($search_query, ENT_QUOTES, 'UTF-8'); ?>»</p>
+                    <?php endif; ?>
 
-                    <?php if (empty($products)): ?>
-                        <p>Товары не найдены</p>
-                    <?php else: ?>
-                        <div class="products-grid">
-                            <?php foreach ($products as $product): ?>
-                                <div class="product-card">
-                                    <a href="<?php echo APP_URL; ?>/product/<?php echo $product['id']; ?>" class="product-card-link">
-                                        <img src="<?php echo APP_URL; ?>/public/images/products/<?php echo htmlspecialchars($product['main_image'] ?? 'placeholder.jpg'); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>" class="product-image" loading="lazy" width="300" height="300">
-                                        <div class="product-info">
-                                            <h3 class="product-name"><?php echo htmlspecialchars($product['name']); ?></h3>
-                                            <p class="product-price"><?php echo number_format($product['price'], 2, '.', ' '); ?> ₽</p>
-                                            <p class="product-description"><?php echo htmlspecialchars(substr($product['description'], 0, 100)); ?></p>
-                                        </div>
-                                    </a>
-                                    <div class="product-actions">
-                                        <form method="POST" action="<?php echo APP_URL; ?>/api/cart/add" class="add-to-cart-form">
-                                            <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
-                                            <input type="hidden" name="quantity" value="1">
-                                            <?php echo \App\Helpers\CSRF::getTokenField(); ?>
-                                            <button type="submit" class="btn btn-sm">
+                    <div id="product-count" class="product-count">
+                        <?php
+                        $count = count($products);
+                        if ($count === 0) {
+                            echo 'Товары не найдены';
+                        } elseif ($count === 1) {
+                            echo 'Найден 1 товар';
+                        } elseif ($count < 5) {
+                            echo "Найдено {$count} товара";
+                        } else {
+                            echo "Найдено {$count} товаров";
+                        }
+                        ?>
+                    </div>
+
+                    <div id="products-container">
+                        <?php if (empty($products)): ?>
+                            <div class="no-products">
+                                <p>Товары не найдены. Попробуйте изменить фильтры.</p>
+                            </div>
+                        <?php else: ?>
+                            <div class="products-grid">
+                                <?php foreach ($products as $product): ?>
+                                    <div class="product-card">
+                                        <a href="<?php echo APP_URL; ?>/product/<?php echo $product['id']; ?>" class="product-card-link">
+                                            <img
+                                                src="<?php echo APP_URL; ?>/public/images/products/<?php echo htmlspecialchars($product['main_image'] ?? 'placeholder.jpg'); ?>"
+                                                alt="<?php echo htmlspecialchars($product['name']); ?>"
+                                                class="product-image"
+                                                loading="lazy"
+                                                width="300"
+                                                height="300"
+                                            >
+                                            <div class="product-info">
+                                                <h3 class="product-name"><?php echo htmlspecialchars($product['name']); ?></h3>
+                                                <p class="product-price">
+                                                    <?php echo number_format($product['price'], 2, '.', ' '); ?> ₽
+                                                    <?php if (!empty($product['old_price'])): ?>
+                                                        <del class="old-price"><?php echo number_format($product['old_price'], 0, '.', ' '); ?> ₽</del>
+                                                    <?php endif; ?>
+                                                </p>
+                                                <p class="product-description"><?php echo htmlspecialchars(substr($product['description'] ?? '', 0, 100)); ?></p>
+                                            </div>
+                                        </a>
+                                        <div class="product-actions">
+                                            <button class="btn btn-sm add-to-cart" data-product-id="<?php echo $product['id']; ?>">
                                                 <img src="<?php echo APP_URL; ?>/public/images/icons/shopping_cart.svg" alt="" width="16" height="16">
                                                 В корзину
                                             </button>
-                                        </form>
+                                        </div>
                                     </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <footer>
-        <p>&copy; 2026 PCComponents Store</p>
-    </footer>
+    <?php include dirname(__FILE__) . '/includes/footer.php'; ?>
     <script src="<?php echo \App\Helpers\Asset::js('main.js'); ?>"></script>
+    <script src="<?php echo \App\Helpers\Asset::js('catalog-filters.js'); ?>"></script>
 </body>
 </html>

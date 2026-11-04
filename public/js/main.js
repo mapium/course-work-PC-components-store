@@ -10,6 +10,22 @@ function initializeApp() {
     setupFormValidation();
     setupCartFunctionality();
     setupNotifications();
+    setupCategoriesCarousel();
+}
+
+// Карусель категорий
+function setupCategoriesCarousel() {
+    const carousel = document.querySelector('.categories-carousel');
+    if (!carousel) return;
+
+    const cards = carousel.querySelectorAll('.category-card');
+    if (cards.length === 0) return;
+
+    // Дублируем карточки для бесконечной прокрутки
+    cards.forEach(card => {
+        const clone = card.cloneNode(true);
+        carousel.appendChild(clone);
+    });
 }
 
 // Валидация форм
@@ -45,8 +61,9 @@ function validateField(field) {
     const type = field.type;
     const required = field.hasAttribute('required');
 
-    if (required && !value) {
-        return false;
+    // Empty optional fields are always valid
+    if (!value) {
+        return !required;
     }
 
     if (type === 'email') {
@@ -60,7 +77,7 @@ function validateField(field) {
     }
 
     if (type === 'number') {
-        return !isNaN(value) && value !== '';
+        return !isNaN(Number(value));
     }
 
     return true;

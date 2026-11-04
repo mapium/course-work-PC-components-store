@@ -50,7 +50,7 @@ $total = $subtotal + $shipping;
                     </a>
                 </div>
             <?php else: ?>
-                <div class="cart-container">
+                <div class="layout-split cart-container">
                     <div class="cart-items-section">
                         <div class="cart-header">
                             <h2>Товары (<?php echo count($items); ?>)</h2>
@@ -81,7 +81,7 @@ $total = $subtotal + $shipping;
                                         <div class="quantity-control">
                                             <form method="POST" action="<?php echo APP_URL; ?>/api/cart/<?php echo $item['id']; ?>" class="quantity-form">
                                                 <input type="hidden" name="quantity" value="<?php echo max(1, $item['quantity'] - 1); ?>">
-                                                <button type="submit" class="btn-icon btn-outline btn-sm" aria-label="Уменьшить количество">
+                                                <button type="submit" class="btn btn-icon btn-outline btn-sm" aria-label="Уменьшить количество">
                                                     <img src="<?php echo APP_URL; ?>/public/images/icons/remove.svg" alt="" width="16" height="16">
                                                 </button>
                                             </form>
@@ -94,7 +94,7 @@ $total = $subtotal + $shipping;
 
                                             <form method="POST" action="<?php echo APP_URL; ?>/api/cart/<?php echo $item['id']; ?>" class="quantity-form">
                                                 <input type="hidden" name="quantity" value="<?php echo $item['quantity'] + 1; ?>">
-                                                <button type="submit" class="btn-icon btn-outline btn-sm" aria-label="Увеличить количество">
+                                                <button type="submit" class="btn btn-icon btn-outline btn-sm" aria-label="Увеличить количество">
                                                     <img src="<?php echo APP_URL; ?>/public/images/icons/add.svg" alt="" width="16" height="16">
                                                 </button>
                                             </form>
@@ -105,7 +105,7 @@ $total = $subtotal + $shipping;
                                         </div>
 
                                         <form method="POST" action="<?php echo APP_URL; ?>/api/cart/<?php echo $item['id']; ?>/delete" class="delete-form">
-                                            <button type="submit" class="btn-icon btn-outline btn-sm" aria-label="Удалить товар">
+                                            <button type="submit" class="btn btn-icon btn-outline btn-sm" aria-label="Удалить товар">
                                                 <img src="<?php echo APP_URL; ?>/public/images/icons/delete.svg" alt="" width="18" height="18">
                                             </button>
                                         </form>
@@ -115,7 +115,7 @@ $total = $subtotal + $shipping;
                         </div>
                     </div>
 
-                    <aside class="cart-summary-section">
+                    <aside class="sticky-aside cart-summary-section">
                         <div class="cart-summary">
                             <h2 class="summary-title">Итого</h2>
 

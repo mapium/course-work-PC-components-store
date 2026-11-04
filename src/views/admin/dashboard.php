@@ -32,7 +32,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'brand' => $_POST['brand'] ?? null,
             'sku' => $_POST['sku'] ?? null,
             'description' => $_POST['description'] ?? null,
-            'main_image' => $_POST['main_image'] ?? null,
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
             'meta_title' => $_POST['meta_title'] ?? null,
             'meta_description' => $_POST['meta_description'] ?? null,
@@ -48,7 +47,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             brand = :brand,
             sku = :sku,
             description = :description,
-            main_image = :main_image,
             is_active = :is_active,
             meta_title = :meta_title,
             meta_description = :meta_description,
@@ -65,12 +63,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':brand' => $data['brand'],
             ':sku' => $data['sku'],
             ':description' => $data['description'],
-            ':main_image' => $data['main_image'],
             ':is_active' => $data['is_active'],
             ':meta_title' => $data['meta_title'],
             ':meta_description' => $data['meta_description'],
             ':meta_keywords' => $data['meta_keywords']
         ]);
+
+        // Обновление главного изображения
+        if (isset($_POST['main_image']) && !empty($_POST['main_image'])) {
+            $main_image = $_POST['main_image'];
+
+            // Сначала убираем флаг is_main у всех изображений товара
+            $stmt = $pdo->prepare("UPDATE product_images SET is_main = 0 WHERE product_id = :product_id");
+            $stmt->execute([':product_id' => $product_id]);
+
+            // Проверяем, существует ли уже это изображение
+            $stmt = $pdo->prepare("SELECT id FROM product_images WHERE product_id = :product_id AND image_path = :image_path");
+            $stmt->execute([
+                ':product_id' => $product_id,
+                ':image_path' => $main_image
+            ]);
+            $existing_image = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($existing_image) {
+                // Обновляем существующее изображение
+                $stmt = $pdo->prepare("UPDATE product_images SET is_main = 1 WHERE id = :id");
+                $stmt->execute([':id' => $existing_image['id']]);
+            } else {
+                // Добавляем новое изображение как главное
+                $stmt = $pdo->prepare("INSERT INTO product_images (product_id, image_path, is_main, sort_order) VALUES (:product_id, :image_path, 1, 1)");
+                $stmt->execute([
+                    ':product_id' => $product_id,
+                    ':image_path' => $main_image
+                ]);
+            }
+        }
+
+        // Обновление характеристик
+        if (isset($_POST['specifications'])) {
+            // Удаляем старые характеристики
+            $stmt = $pdo->prepare("DELETE FROM product_specifications WHERE product_id = :product_id");
+            $stmt->execute([':product_id' => $product_id]);
+
+            // Добавляем новые характеристики
+            $stmt = $pdo->prepare("INSERT INTO product_specifications (product_id, spec_name, spec_value) VALUES (:product_id, :spec_name, :spec_value)");
+
+            foreach ($_POST['specifications'] as $spec) {
+                if (!empty($spec['name']) && !empty($spec['value'])) {
+                    $stmt->execute([
+                        ':product_id' => $product_id,
+                        ':spec_name' => trim($spec['name']),
+                        ':spec_value' => trim($spec['value'])
+                    ]);
+                }
+            }
+        }
 
         header('Location: ?tab=products');
         exit;
@@ -117,10 +164,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $stmt = $pdo->prepare("INSERT INTO products (
             category_id, name, slug, price, old_price, stock, brand, sku,
-            description, main_image, is_active, meta_title, meta_description, meta_keywords, created_at
+            description, is_active, meta_title, meta_description, meta_keywords, created_at
         ) VALUES (
             :category_id, :name, :slug, :price, :old_price, :stock, :brand, :sku,
-            :description, :main_image, :is_active, :meta_title, :meta_description, :meta_keywords, NOW()
+            :description, :is_active, :meta_title, :meta_description, :meta_keywords, NOW()
         )");
 
         $stmt->execute([
@@ -133,14 +180,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':brand' => $data['brand'],
             ':sku' => $data['sku'],
             ':description' => $data['description'],
-            ':main_image' => $data['main_image'],
+            '' => $data['main_image'],
             ':is_active' => $data['is_active'],
             ':meta_title' => $data['meta_title'],
             ':meta_description' => $data['meta_description'],
             ':meta_keywords' => $data['meta_keywords']
         ]);
 
+        $product_id = $pdo->lastInsertId();
+
+        // Добавление главного изображения для нового товара
+        if (isset($_POST['main_image']) && !empty($_POST['main_image']) && $product_id) {
+            $stmt = $pdo->prepare("INSERT INTO product_images (product_id, image_path, is_main, sort_order) VALUES (:product_id, :image_path, 1, 1)");
+            $stmt->execute([
+                ':product_id' => $product_id,
+                ':image_path' => $_POST['main_image']
+            ]);
+        }
+
+        // Добавление характеристик для нового товара
+        if (isset($_POST['specifications']) && $product_id) {
+            $stmt = $pdo->prepare("INSERT INTO product_specifications (product_id, spec_name, spec_value) VALUES (:product_id, :spec_name, :spec_value)");
+
+            foreach ($_POST['specifications'] as $spec) {
+                if (!empty($spec['name']) && !empty($spec['value'])) {
+                    $stmt->execute([
+                        ':product_id' => $product_id,
+                        ':spec_name' => trim($spec['name']),
+                        ':spec_value' => trim($spec['value'])
+                    ]);
+                }
+            }
+        }
+
         header('Location: ?tab=products');
+        exit;
+    }
+
+    if ($action === 'update_order_status' && isset($_POST['order_id'])) {
+        // Обновление статуса заказа
+        $order_id = (int)$_POST['order_id'];
+        $new_status = $_POST['status'] ?? '';
+
+        $allowed_statuses = ['pending', 'processing', 'assembled', 'shipped', 'delivered', 'cancelled'];
+
+        if (in_array($new_status, $allowed_statuses)) {
+            $stmt = $pdo->prepare("UPDATE orders SET status = :status, updated_at = NOW() WHERE id = :id");
+            $stmt->execute([
+                ':status' => $new_status,
+                ':id' => $order_id
+            ]);
+        }
+
+        header('Location: ?tab=orders');
         exit;
     }
 }
@@ -183,7 +275,7 @@ $current_tab = $_GET['tab'] ?? 'dashboard';
             </div>
 
             <div class="admin-container">
-                <aside class="admin-sidebar">
+                <aside class="sticky-aside admin-sidebar">
                     <nav class="admin-nav">
                         <a href="?tab=dashboard" class="admin-nav-link <?php echo $current_tab === 'dashboard' ? 'active' : ''; ?>">
                             <img src="<?php echo APP_URL; ?>/public/images/icons/dashboard.svg" alt="" width="18" height="18">
@@ -378,6 +470,26 @@ $current_tab = $_GET['tab'] ?? 'dashboard';
                                         <input type="text" name="meta_keywords">
                                     </div>
 
+                                    <div class="form-group">
+                                        <label>Характеристики товара</label>
+                                        <div id="specifications-container-add">
+                                        </div>
+                                        <button type="button" class="btn btn-outline" onclick="addSpecificationForCreate()">
+                                            <img src="<?php echo APP_URL; ?>/public/images/icons/add.svg" alt="" width="18" height="18">
+                                            Добавить характеристику
+                                        </button>
+
+                                        <datalist id="spec-names-list-add">
+                                            <?php
+                                            // Получаем уникальные названия характеристик из всех товаров
+                                            $stmt = $pdo->query("SELECT DISTINCT spec_name FROM product_specifications ORDER BY spec_name");
+                                            while ($spec_name = $stmt->fetch(PDO::FETCH_ASSOC)):
+                                            ?>
+                                                <option value="<?php echo htmlspecialchars($spec_name['spec_name']); ?>">
+                                            <?php endwhile; ?>
+                                        </datalist>
+                                    </div>
+
                                     <div class="form-actions">
                                         <button type="submit" class="btn">Создать</button>
                                         <a href="?tab=products" class="btn btn-outline">Отмена</a>
@@ -387,6 +499,12 @@ $current_tab = $_GET['tab'] ?? 'dashboard';
                         <?php elseif (isset($_GET['action']) && $_GET['action'] === 'edit' && isset($_GET['id'])):
                             $edit_product = $product_model->getById($_GET['id']);
                             $specifications = $product_model->getSpecifications($_GET['id']);
+
+                            // Получаем главное изображение товара
+                            $stmt = $pdo->prepare("SELECT image_path FROM product_images WHERE product_id = :product_id AND is_main = 1 LIMIT 1");
+                            $stmt->execute([':product_id' => $_GET['id']]);
+                            $main_image_data = $stmt->fetch(PDO::FETCH_ASSOC);
+                            $edit_product['main_image'] = $main_image_data['image_path'] ?? '';
                         ?>
                             <!-- Форма редактирования товара -->
                             <div class="product-form-card">
@@ -492,6 +610,45 @@ $current_tab = $_GET['tab'] ?? 'dashboard';
                                         <input type="text" name="meta_keywords" value="<?php echo htmlspecialchars($edit_product['meta_keywords'] ?? ''); ?>">
                                     </div>
 
+                                    <div class="form-group">
+                                        <label>Характеристики товара</label>
+                                        <div id="specifications-container">
+                                            <?php if (!empty($specifications)): ?>
+                                                <?php foreach ($specifications as $index => $spec): ?>
+                                                    <div class="specification-row" data-index="<?php echo $index; ?>">
+                                                        <input type="text"
+                                                               name="specifications[<?php echo $index; ?>][name]"
+                                                               value="<?php echo htmlspecialchars($spec['spec_name']); ?>"
+                                                               placeholder="Название характеристики"
+                                                               class="spec-name-input"
+                                                               list="spec-names-list">
+                                                        <input type="text"
+                                                               name="specifications[<?php echo $index; ?>][value]"
+                                                               value="<?php echo htmlspecialchars($spec['spec_value']); ?>"
+                                                               placeholder="Значение">
+                                                        <button type="button" class="btn btn-sm btn-destructive" onclick="removeSpecification(this)">
+                                                            <img src="<?php echo APP_URL; ?>/public/images/icons/delete.svg" alt="" width="14" height="14">
+                                                        </button>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </div>
+                                        <button type="button" class="btn btn-outline" onclick="addSpecification()">
+                                            <img src="<?php echo APP_URL; ?>/public/images/icons/add.svg" alt="" width="18" height="18">
+                                            Добавить характеристику
+                                        </button>
+
+                                        <datalist id="spec-names-list">
+                                            <?php
+                                            // Получаем уникальные названия характеристик из всех товаров
+                                            $stmt = $pdo->query("SELECT DISTINCT spec_name FROM product_specifications ORDER BY spec_name");
+                                            while ($spec_name = $stmt->fetch(PDO::FETCH_ASSOC)):
+                                            ?>
+                                                <option value="<?php echo htmlspecialchars($spec_name['spec_name']); ?>">
+                                            <?php endwhile; ?>
+                                        </datalist>
+                                    </div>
+
                                     <div class="form-actions">
                                         <button type="submit" class="btn">Сохранить</button>
                                         <a href="?tab=products" class="btn btn-outline">Отмена</a>
@@ -568,16 +725,146 @@ $current_tab = $_GET['tab'] ?? 'dashboard';
                             <h2>Управление заказами</h2>
                         </div>
 
+                        <?php if (isset($_GET['action']) && $_GET['action'] === 'view' && isset($_GET['id'])):
+                            $order_id = (int)$_GET['id'];
+                            $stmt = $pdo->prepare("SELECT o.*, u.username, u.email FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE o.id = :id");
+                            $stmt->execute([':id' => $order_id]);
+                            $order = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                            if ($order):
+                                $stmt = $pdo->prepare("SELECT oi.*, p.name, p.main_image FROM order_items oi LEFT JOIN products p ON oi.product_id = p.id WHERE oi.order_id = :order_id");
+                                $stmt->execute([':order_id' => $order_id]);
+                                $order_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                        ?>
+                            <div class="product-form-card">
+                                <h3>Заказ <?php echo htmlspecialchars($order['order_number']); ?></h3>
+
+                                <div class="order-details">
+                                    <div class="form-grid">
+                                        <div class="form-group">
+                                            <label>Клиент</label>
+                                            <p><?php echo htmlspecialchars($order['username'] ?? 'Не указан'); ?> (<?php echo htmlspecialchars($order['email'] ?? ''); ?>)</p>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label>Дата создания</label>
+                                            <p><?php echo date('d.m.Y H:i', strtotime($order['created_at'])); ?></p>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label>Метод доставки</label>
+                                            <p><?php
+                                                $delivery_methods = [
+                                                    'pickup' => 'Самовывоз',
+                                                    'courier' => 'Курьер',
+                                                    'mail' => 'Почта'
+                                                ];
+                                                echo $delivery_methods[$order['delivery_method']] ?? $order['delivery_method'];
+                                            ?></p>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label>Метод оплаты</label>
+                                            <p><?php
+                                                $payment_methods = [
+                                                    'card' => 'Карта',
+                                                    'cash' => 'Наличные',
+                                                    'online' => 'Онлайн'
+                                                ];
+                                                echo $payment_methods[$order['payment_method']] ?? $order['payment_method'];
+                                            ?></p>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Адрес доставки</label>
+                                        <p><?php echo htmlspecialchars($order['delivery_address'] ?? 'Не указан'); ?></p>
+                                    </div>
+
+                                    <?php if (!empty($order['notes'])): ?>
+                                    <div class="form-group">
+                                        <label>Примечания</label>
+                                        <p><?php echo htmlspecialchars($order['notes']); ?></p>
+                                    </div>
+                                    <?php endif; ?>
+
+                                    <div class="form-group">
+                                        <label>Товары в заказе</label>
+                                        <div class="data-table-wrapper">
+                                            <table class="data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Товар</th>
+                                                        <th>Количество</th>
+                                                        <th>Цена</th>
+                                                        <th>Итого</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php foreach ($order_items as $item): ?>
+                                                        <tr>
+                                                            <td>
+                                                                <div style="display: flex; align-items: center; gap: 10px;">
+                                                                    <?php if ($item['main_image']): ?>
+                                                                        <img src="<?php echo APP_URL; ?>/public/images/products/<?php echo htmlspecialchars($item['main_image']); ?>"
+                                                                             alt="" style="width: 40px; height: 40px; object-fit: cover;">
+                                                                    <?php endif; ?>
+                                                                    <?php echo htmlspecialchars($item['name']); ?>
+                                                                </div>
+                                                            </td>
+                                                            <td><?php echo $item['quantity']; ?></td>
+                                                            <td><?php echo number_format($item['unit_price'], 2, '.', ' '); ?> ₽</td>
+                                                            <td><?php echo number_format($item['total_price'], 2, '.', ' '); ?> ₽</td>
+                                                        </tr>
+                                                    <?php endforeach; ?>
+                                                    <tr style="font-weight: bold;">
+                                                        <td colspan="3" style="text-align: right;">Общая сумма:</td>
+                                                        <td><?php echo number_format($order['total_amount'], 2, '.', ' '); ?> ₽</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <form method="POST" action="?tab=orders">
+                                        <input type="hidden" name="action" value="update_order_status">
+                                        <input type="hidden" name="order_id" value="<?php echo $order['id']; ?>">
+                                        <?php echo \App\Helpers\CSRF::getTokenField(); ?>
+
+                                        <div class="form-group">
+                                            <label>Изменить статус заказа</label>
+                                            <select name="status" class="status-select">
+                                                <option value="pending" <?php echo $order['status'] === 'pending' ? 'selected' : ''; ?>>В обработке</option>
+                                                <option value="processing" <?php echo $order['status'] === 'processing' ? 'selected' : ''; ?>>Обрабатывается</option>
+                                                <option value="assembled" <?php echo $order['status'] === 'assembled' ? 'selected' : ''; ?>>Собран</option>
+                                                <option value="shipped" <?php echo $order['status'] === 'shipped' ? 'selected' : ''; ?>>Отправлен</option>
+                                                <option value="delivered" <?php echo $order['status'] === 'delivered' ? 'selected' : ''; ?>>Доставлен</option>
+                                                <option value="cancelled" <?php echo $order['status'] === 'cancelled' ? 'selected' : ''; ?>>Отменён</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-actions">
+                                            <button type="submit" class="btn">Обновить статус</button>
+                                            <a href="?tab=orders" class="btn btn-outline">Назад к списку</a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        <?php
+                            endif;
+                        else:
+                        ?>
                         <div class="data-table-wrapper">
                             <table class="data-table">
                                 <thead>
                                     <tr>
                                         <th>ID</th>
                                         <th>Номер заказа</th>
+                                        <th>Клиент</th>
                                         <th>Дата</th>
                                         <th>Сумма</th>
                                         <th>Статус</th>
-                                        <th>Метод оплаты</th>
+                                        <th>Действия</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -585,6 +872,12 @@ $current_tab = $_GET['tab'] ?? 'dashboard';
                                         <tr>
                                             <td><?php echo $order['id']; ?></td>
                                             <td><strong><?php echo htmlspecialchars($order['order_number']); ?></strong></td>
+                                            <td><?php
+                                                $stmt = $pdo->prepare("SELECT username FROM users WHERE id = :id");
+                                                $stmt->execute([':id' => $order['user_id']]);
+                                                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+                                                echo htmlspecialchars($user['username'] ?? 'Гость');
+                                            ?></td>
                                             <td><?php echo date('d.m.Y H:i', strtotime($order['created_at'])); ?></td>
                                             <td><?php echo number_format($order['total_amount'], 2, '.', ' '); ?> ₽</td>
                                             <td>
@@ -592,8 +885,9 @@ $current_tab = $_GET['tab'] ?? 'dashboard';
                                                 $status_map = [
                                                     'pending' => ['label' => 'В обработке', 'class' => 'badge-warning'],
                                                     'processing' => ['label' => 'Обрабатывается', 'class' => 'badge-info'],
+                                                    'assembled' => ['label' => 'Собран', 'class' => 'badge-secondary'],
                                                     'shipped' => ['label' => 'Отправлен', 'class' => 'badge-secondary'],
-                                                    'completed' => ['label' => 'Выполнен', 'class' => 'badge-success'],
+                                                    'delivered' => ['label' => 'Доставлен', 'class' => 'badge-success'],
                                                     'cancelled' => ['label' => 'Отменён', 'class' => 'badge-destructive'],
                                                 ];
                                                 $status = $status_map[$order['status']] ?? ['label' => $order['status'], 'class' => ''];
@@ -602,12 +896,18 @@ $current_tab = $_GET['tab'] ?? 'dashboard';
                                                     <?php echo $status['label']; ?>
                                                 </span>
                                             </td>
-                                            <td><?php echo htmlspecialchars($order['payment_method'] ?? '-'); ?></td>
+                                            <td>
+                                                <a href="?tab=orders&action=view&id=<?php echo $order['id']; ?>" class="btn btn-sm btn-outline">
+                                                    <img src="<?php echo APP_URL; ?>/public/images/icons/visibility.svg" alt="" width="14" height="14">
+                                                    Просмотр
+                                                </a>
+                                            </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
                         </div>
+                        <?php endif; ?>
 
                     <?php elseif ($current_tab === 'users'): ?>
                         <div class="admin-header">
@@ -659,6 +959,9 @@ $current_tab = $_GET['tab'] ?? 'dashboard';
     <?php include dirname(dirname(__FILE__)) . '/includes/footer.php'; ?>
 
     <script>
+    let specificationIndex = <?php echo isset($specifications) ? count($specifications) : 0; ?>;
+    let specificationIndexAdd = 0;
+
     function toggleDropdown(dropdownId) {
         const dropdown = document.getElementById(dropdownId);
         const allDropdowns = document.querySelectorAll('.custom-options');
@@ -710,6 +1013,60 @@ $current_tab = $_GET['tab'] ?? 'dashboard';
             });
         }
     });
+
+    // Функции для управления характеристиками (форма редактирования)
+    function addSpecification() {
+        const container = document.getElementById('specifications-container');
+        const newRow = document.createElement('div');
+        newRow.className = 'specification-row';
+        newRow.setAttribute('data-index', specificationIndex);
+
+        newRow.innerHTML = `
+            <input type="text"
+                   name="specifications[${specificationIndex}][name]"
+                   placeholder="Название характеристики"
+                   class="spec-name-input"
+                   list="spec-names-list">
+            <input type="text"
+                   name="specifications[${specificationIndex}][value]"
+                   placeholder="Значение">
+            <button type="button" class="btn btn-sm btn-destructive" onclick="removeSpecification(this)">
+                <img src="<?php echo APP_URL; ?>/public/images/icons/delete.svg" alt="" width="14" height="14">
+            </button>
+        `;
+
+        container.appendChild(newRow);
+        specificationIndex++;
+    }
+
+    function removeSpecification(button) {
+        button.closest('.specification-row').remove();
+    }
+
+    // Функции для управления характеристиками (форма создания)
+    function addSpecificationForCreate() {
+        const container = document.getElementById('specifications-container-add');
+        const newRow = document.createElement('div');
+        newRow.className = 'specification-row';
+        newRow.setAttribute('data-index', specificationIndexAdd);
+
+        newRow.innerHTML = `
+            <input type="text"
+                   name="specifications[${specificationIndexAdd}][name]"
+                   placeholder="Название характеристики"
+                   class="spec-name-input"
+                   list="spec-names-list-add">
+            <input type="text"
+                   name="specifications[${specificationIndexAdd}][value]"
+                   placeholder="Значение">
+            <button type="button" class="btn btn-sm btn-destructive" onclick="removeSpecification(this)">
+                <img src="<?php echo APP_URL; ?>/public/images/icons/delete.svg" alt="" width="14" height="14">
+            </button>
+        `;
+
+        container.appendChild(newRow);
+        specificationIndexAdd++;
+    }
     </script>
 </body>
 </html>

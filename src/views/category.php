@@ -53,9 +53,7 @@ $products = $product_model->getByCategoryId($category['id']);
         </div>
     </main>
 
-    <footer>
-        <p>&copy; 2026 PCComponents Store</p>
-    </footer>
+    <?php include dirname(__FILE__) . '/includes/footer.php'; ?>
 
     <script src="<?php echo \App\Helpers\Asset::js('main.js'); ?>"></script>
 </body>

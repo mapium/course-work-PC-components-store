@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\Product;
+use App\Models\Category;
 use App\Helpers\CSRF;
 
 class ProductController {
@@ -12,6 +13,54 @@ class ProductController {
     public function __construct($db) {
         $this->db = $db;
         $this->product_model = new Product($db);
+    }
+
+    public function search() {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        $query = $_GET['q'] ?? '';
+
+        if (!is_string($query) || preg_match('/\A.{0,120}\z/us', $query) !== 1) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Запрос должен содержать не более 120 символов'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $query = trim(preg_replace('/\s+/u', ' ', $query));
+        if ($query === '') {
+            echo json_encode(['success' => true, 'products' => [], 'categories' => []]);
+            return;
+        }
+
+        try {
+            $products = array_map(function ($product) {
+                return array_intersect_key($product, array_flip([
+                    'id', 'name', 'price', 'brand', 'stock', 'main_image', 'category_name'
+                ]));
+            }, $this->product_model->search($query, 8));
+
+            $terms = preg_split('/\s+/u', $query, -1, PREG_SPLIT_NO_EMPTY);
+            $categories = array_filter((new Category($this->db))->getAll(), function ($category) use ($terms) {
+                foreach ($terms as $term) {
+                    if (preg_match('/' . preg_quote($term, '/') . '/iu', $category['name'] . ' ' . $category['slug']) !== 1) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+            $categories = array_map(function ($category) {
+                return array_intersect_key($category, array_flip(['id', 'name', 'slug']));
+            }, array_values($categories));
+
+            echo json_encode([
+                'success' => true,
+                'products' => $products,
+                'categories' => $categories
+            ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+        } catch (\PDOException $exception) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Поиск временно недоступен'], JSON_UNESCAPED_UNICODE);
+        }
     }
 
     public function create() {

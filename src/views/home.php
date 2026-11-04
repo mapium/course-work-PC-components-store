@@ -56,7 +56,14 @@
     </script>
 </head>
 <body>
-    <?php include dirname(__FILE__) . '/includes/header.php'; ?>
+    <?php include dirname(__FILE__) . '/includes/header.php'; 
+    require_once dirname(__DIR__) . '/config/Database.php';
+    require_once dirname(__DIR__) . '/models/Product.php';
+
+    $db = new \App\Config\Database();
+    $pdo = $db->connect();
+    $product_model = new \App\Models\Product($pdo);
+    ?>
 
     <main>
         <section class="hero">
@@ -66,20 +73,33 @@
                 <a href="<?php echo APP_URL; ?>/catalog" class="btn">Начать покупки</a>
             </div>
         </section>
+        <section class="categories">
+            <div class="container">
+                <h2>Категории товаров</h2>
+                <div class="categories-carousel-wrapper">
+                    <div class="categories-carousel">
+                        <?php
+                        require_once dirname(__DIR__) . '/models/Category.php';
+                        $category_model = new \App\Models\Category($pdo);
+                        $categories = $category_model->getAll();
 
+                        foreach ($categories as $category):
+                        ?>
+                            <div class="category-card">
+                                <h3><a href="<?php echo APP_URL; ?>/category/<?php echo htmlspecialchars($category['slug']); ?>"><?php echo htmlspecialchars($category['name']); ?></a></h3>
+                                <p><?php echo htmlspecialchars($category['description']); ?></p>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+        </section>
         <section class="featured-products">
             <div class="container">
                 <h2>Популярные товары</h2>
                 <div class="products-grid">
                     <?php
-                    require_once dirname(__DIR__) . '/config/Database.php';
-                    require_once dirname(__DIR__) . '/models/Product.php';
-
-                    $db = new \App\Config\Database();
-                    $pdo = $db->connect();
-                    $product_model = new \App\Models\Product($pdo);
                     $featured = $product_model->getFeatured(6);
-
                     foreach ($featured as $product):
                     ?>
                         <div class="product-card">
@@ -114,56 +134,9 @@
                 </div>
             </div>
         </section>
-
-        <section class="categories">
-            <div class="container">
-                <h2>Категории товаров</h2>
-                <div class="categories-grid">
-                    <?php
-                    require_once dirname(__DIR__) . '/models/Category.php';
-                    $category_model = new \App\Models\Category($pdo);
-                    $categories = $category_model->getAll();
-
-                    foreach ($categories as $category):
-                    ?>
-                        <div class="category-card">
-                            <h3><a href="<?php echo APP_URL; ?>/category/<?php echo htmlspecialchars($category['slug']); ?>"><?php echo htmlspecialchars($category['name']); ?></a></h3>
-                            <p><?php echo htmlspecialchars($category['description']); ?></p>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </section>
     </main>
 
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h4>О компании</h4>
-                    <p>PCComponents Store - ваш надежный партнер в выборе комплектующих для ПК.</p>
-                </div>
-                <div class="footer-section">
-                    <h4>Контакты</h4>
-                    <p>Email: info@pccomponents.local</p>
-                    <p>Телефон: +7 (343) 123-45-67</p>
-                    <p>Адрес: г. Екатеринбург, ул. Декабристов, д. 83</p>
-                </div>
-                <div class="footer-section">
-                    <h4>Быстрые ссылки</h4>
-                    <ul>
-                        <li><a href="<?php echo APP_URL; ?>/catalog">Каталог</a></li>
-                        <li><a href="<?php echo APP_URL; ?>/about">О нас</a></li>
-                        <li><a href="<?php echo APP_URL; ?>/delivery">Доставка</a></li>
-                        <li><a href="<?php echo APP_URL; ?>/contacts">Контакты</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2026 PCComponents Store. Все права защищены.</p>
-            </div>
-        </div>
-    </footer>
+    <?php include dirname(__FILE__) . '/includes/footer.php'; ?>
 
     <script src="<?php echo \App\Helpers\Asset::js('main.js'); ?>"></script>
 </body>

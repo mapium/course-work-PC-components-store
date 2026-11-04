@@ -54,7 +54,7 @@ if ($user_id) {
                 </h1>
             </div>
 
-            <div class="checkout-container">
+            <div class="layout-split checkout-container">
                 <div class="checkout-form-section">
                     <form id="checkoutForm" class="checkout-form" method="POST" action="<?php echo APP_URL; ?>/api/orders/create">
                         <div class="form-section">
@@ -170,7 +170,7 @@ if ($user_id) {
                     </form>
                 </div>
 
-                <aside class="checkout-summary-section">
+                <aside class="sticky-aside checkout-summary-section">
                     <div class="checkout-summary">
                         <h2 class="summary-title">Ваш заказ</h2>
 

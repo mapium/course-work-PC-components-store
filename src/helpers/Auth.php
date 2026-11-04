@@ -37,8 +37,16 @@ class Auth {
         return $_SESSION['user_id'] ?? null;
     }
 
+    public static function getUserId() {
+        return self::getCurrentUserId();
+    }
+
     public static function getCurrentRole() {
         return $_SESSION['role'] ?? 'guest';
+    }
+
+    public static function getUserRole() {
+        return self::getCurrentRole();
     }
 
     public static function hasRole($role) {

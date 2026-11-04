@@ -72,6 +72,30 @@ $path = rtrim($path, '/') ?: '/';
 
 // Маршруты API
 if (strpos($path, '/api/') === 0) {
+    if ($path === '/api/search' && $request_method === 'GET') {
+        $controller = new \App\Controllers\ProductController($pdo);
+        $controller->search();
+        exit;
+    }
+
+    if ($path === '/api/reviews/add' && $request_method === 'POST') {
+        $controller = new \App\Controllers\ReviewController();
+        $controller->addReview();
+        exit;
+    }
+
+    if ($path === '/api/reviews/update' && $request_method === 'POST') {
+        $controller = new \App\Controllers\ReviewController();
+        $controller->updateReview();
+        exit;
+    }
+
+    if ($path === '/api/reviews/delete' && $request_method === 'POST') {
+        $controller = new \App\Controllers\ReviewController();
+        $controller->deleteReview();
+        exit;
+    }
+
     if ($path === '/api/cart' && $request_method === 'GET') {
         $controller = new \App\Controllers\CartController($pdo);
         $controller->getItems();
@@ -155,6 +179,63 @@ if (strpos($path, '/api/') === 0) {
     if ($path === '/api/orders/user' && $request_method === 'GET') {
         $controller = new \App\Controllers\OrderController($pdo);
         $controller->getUserOrders();
+        exit;
+    }
+
+    // Filtering API endpoints
+    if (preg_match('/^\/api\/specifications\/(\d+)$/', $path, $matches) && $request_method === 'GET') {
+        header('Content-Type: application/json');
+        $category_id = (int)$matches[1];
+        $productModel = new \App\Models\Product($pdo);
+        $specifications = $productModel->getAvailableSpecifications($category_id);
+        echo json_encode(['success' => true, 'specifications' => $specifications]);
+        exit;
+    }
+
+    if (preg_match('/^\/api\/brands\/(\d+)$/', $path, $matches) && $request_method === 'GET') {
+        header('Content-Type: application/json');
+        $category_id = (int)$matches[1];
+        $productModel = new \App\Models\Product($pdo);
+        $brands = $productModel->getAvailableBrands($category_id);
+        echo json_encode(['success' => true, 'brands' => $brands]);
+        exit;
+    }
+
+    if ($path === '/api/products/filter' && $request_method === 'POST') {
+        header('Content-Type: application/json');
+        $input = json_decode(file_get_contents('php://input'), true);
+
+        $filters = [];
+        if (isset($input['search']) && is_string($input['search'])) {
+            $filters['search'] = trim($input['search']);
+        }
+        if (!empty($input['category_id'])) {
+            $filters['category_id'] = (int)$input['category_id'];
+        }
+        if (!empty($input['price_min'])) {
+            $filters['price_min'] = (float)$input['price_min'];
+        }
+        if (!empty($input['price_max'])) {
+            $filters['price_max'] = (float)$input['price_max'];
+        }
+        if (!empty($input['brand'])) {
+            $filters['brand'] = $input['brand'];
+        }
+        if (!empty($input['specifications']) && is_array($input['specifications'])) {
+            $filters['specifications'] = $input['specifications'];
+        }
+
+        $limit = !empty($input['limit']) ? (int)$input['limit'] : 100;
+        $offset = !empty($input['offset']) ? (int)$input['offset'] : 0;
+
+        $productModel = new \App\Models\Product($pdo);
+        $products = $productModel->getWithFilters($filters, $limit, $offset);
+
+        echo json_encode([
+            'success' => true,
+            'products' => $products,
+            'count' => count($products)
+        ]);
         exit;
     }
 
