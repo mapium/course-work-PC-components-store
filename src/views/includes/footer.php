@@ -13,9 +13,9 @@
                     <h4 class="footer-heading">Каталог</h4>
                     <ul class="footer-links">
                         <li><a href="<?php echo APP_URL; ?>/catalog">Все товары</a></li>
-                        <li><a href="<?php echo APP_URL; ?>/category/processors">Процессоры</a></li>
-                        <li><a href="<?php echo APP_URL; ?>/category/video-cards">Видеокарты</a></li>
-                        <li><a href="<?php echo APP_URL; ?>/category/motherboards">Материнские платы</a></li>
+                        <?php foreach ((new \App\Models\Category($pdo))->getAll() as $footer_category): ?>
+                            <li><a href="<?php echo htmlspecialchars(\App\Helpers\Url::category($footer_category, $pdo)); ?>"><?php echo htmlspecialchars($footer_category['name']); ?></a></li>
+                        <?php endforeach; ?>
                     </ul>
                 </div>
 

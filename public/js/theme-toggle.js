@@ -1,51 +1,22 @@
-// Theme toggle functionality
-(function() {
-    const THEME_KEY = 'theme';
-    const DARK_CLASS = 'dark';
-    const lightIconPath = '/public/images/icons/light_mode.svg';
-    const darkIconPath = '/public/images/icons/dark_mode.svg';
-
-    // Get elements
+(function () {
+    'use strict';
     const toggle = document.getElementById('theme-toggle');
     const icon = document.getElementById('theme-icon');
-    const html = document.documentElement;
-
     if (!toggle || !icon) return;
-
-    // Get initial theme
-    const savedTheme = localStorage.getItem(THEME_KEY);
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
-
-    // Apply initial theme
-    if (initialTheme === 'dark') {
-        html.classList.add(DARK_CLASS);
-        icon.src = icon.src.replace('dark_mode.svg', 'light_mode.svg');
+    function update() {
+        const dark = document.documentElement.classList.contains('dark');
+        icon.src = icon.src.replace(/(?:dark|light)_mode\.svg/, `${dark ? 'light' : 'dark'}_mode.svg`);
+        toggle.setAttribute('aria-label', dark ? 'Включить светлую тему' : 'Включить тёмную тему');
+        toggle.setAttribute('aria-pressed', String(dark));
     }
-
-    // Toggle theme
     toggle.addEventListener('click', () => {
-        const isDark = html.classList.toggle(DARK_CLASS);
-        localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
-
-        // Update icon
-        if (isDark) {
-            icon.src = icon.src.replace('dark_mode.svg', 'light_mode.svg');
-        } else {
-            icon.src = icon.src.replace('light_mode.svg', 'dark_mode.svg');
-        }
+        const dark = document.documentElement.classList.toggle('dark');
+        document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+        try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (_) { /* Тема работает без хранилища. */ }
+        update();
     });
-
-    // Listen for system theme changes
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-        if (!localStorage.getItem(THEME_KEY)) {
-            if (e.matches) {
-                html.classList.add(DARK_CLASS);
-                icon.src = icon.src.replace('dark_mode.svg', 'light_mode.svg');
-            } else {
-                html.classList.remove(DARK_CLASS);
-                icon.src = icon.src.replace('light_mode.svg', 'dark_mode.svg');
-            }
-        }
+    document.addEventListener('click', event => {
+        if (event.target.closest('#theme-toggle-settings')) toggle.click();
     });
+    update();
 })();

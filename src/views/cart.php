@@ -1,9 +1,7 @@
 <?php
-require_once dirname(__DIR__) . '/config/Database.php';
+/** @var \PDO $pdo */
 require_once dirname(__DIR__) . '/models/Cart.php';
 
-$db = new \App\Config\Database();
-$pdo = $db->connect();
 $cart_model = new \App\Models\Cart($pdo);
 
 // Получаем ID пользователя или сессии
@@ -15,17 +13,13 @@ $subtotal = 0;
 foreach ($items as $item) {
     $subtotal += $item['price'] * $item['quantity'];
 }
-$shipping = 300;
+$shipping = $items ? 300 : 0;
 $total = $subtotal + $shipping;
 ?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="app-url" content="<?php echo APP_URL; ?>">
-    <title>Корзина покупок - PCComponents Store</title>
-    <link rel="stylesheet" href="<?php echo \App\Helpers\Asset::css('style.css'); ?>">
+    <?php include __DIR__ . '/includes/head.php'; ?>
 </head>
 <body>
     <?php include dirname(__FILE__) . '/includes/header.php'; ?>
@@ -58,8 +52,8 @@ $total = $subtotal + $shipping;
 
                         <div class="cart-items">
                             <?php foreach ($items as $item): ?>
-                                <div class="cart-item-card">
-                                    <a href="<?php echo APP_URL; ?>/product/<?php echo $item['product_id']; ?>" class="cart-item-image-link">
+                                <div class="cart-item-card" data-cart-item="<?php echo (int)$item['id']; ?>">
+                                    <a href="<?php echo htmlspecialchars(\App\Helpers\Url::product($item, $pdo)); ?>" class="cart-item-image-link">
                                         <img src="<?php echo APP_URL; ?>/public/images/products/<?php echo htmlspecialchars($item['main_image'] ?? 'placeholder.jpg'); ?>"
                                              alt="<?php echo htmlspecialchars($item['name']); ?>"
                                              class="cart-item-image"
@@ -69,7 +63,7 @@ $total = $subtotal + $shipping;
                                     </a>
 
                                     <div class="cart-item-details">
-                                        <a href="<?php echo APP_URL; ?>/product/<?php echo $item['product_id']; ?>" class="cart-item-name">
+                                        <a href="<?php echo htmlspecialchars(\App\Helpers\Url::product($item, $pdo)); ?>" class="cart-item-name">
                                             <?php echo htmlspecialchars($item['name']); ?>
                                         </a>
                                         <div class="cart-item-price">
@@ -79,22 +73,24 @@ $total = $subtotal + $shipping;
 
                                     <div class="cart-item-actions">
                                         <div class="quantity-control">
-                                            <form method="POST" action="<?php echo APP_URL; ?>/api/cart/<?php echo $item['id']; ?>" class="quantity-form">
+                                            <form method="POST" action="<?php echo APP_URL; ?>/cart/<?php echo $item['id']; ?>/update" class="quantity-form" data-ajax="cart">
+                                                <?php echo \App\Helpers\CSRF::getTokenField(); ?>
                                                 <input type="hidden" name="quantity" value="<?php echo max(1, $item['quantity'] - 1); ?>">
-                                                <button type="submit" class="btn btn-icon btn-outline btn-sm" aria-label="Уменьшить количество">
+                                                <button type="submit" class="btn btn-icon btn-outline btn-sm" aria-label="Уменьшить количество" <?php echo $item['quantity'] <= 1 ? 'disabled' : ''; ?>>
                                                     <img src="<?php echo APP_URL; ?>/public/images/icons/remove.svg" alt="" width="16" height="16">
                                                 </button>
                                             </form>
 
-                                            <input type="number"
-                                                   value="<?php echo htmlspecialchars($item['quantity']); ?>"
-                                                   readonly
-                                                   class="quantity-display"
-                                                   aria-label="Количество товара">
+                                            <form method="POST" action="<?php echo APP_URL; ?>/cart/<?php echo $item['id']; ?>/update" class="quantity-direct-form" data-ajax="cart">
+                                                <?php echo \App\Helpers\CSRF::getTokenField(); ?>
+                                                <input id="cart-quantity-<?php echo (int)$item['id']; ?>" type="number" name="quantity" value="<?php echo (int)$item['quantity']; ?>" min="1" max="<?php echo max(1, (int)$item['stock']); ?>" step="1" required class="quantity-display" aria-label="Количество товара">
+                                                <noscript><button type="submit" class="btn btn-sm">Обновить</button></noscript>
+                                            </form>
 
-                                            <form method="POST" action="<?php echo APP_URL; ?>/api/cart/<?php echo $item['id']; ?>" class="quantity-form">
+                                            <form method="POST" action="<?php echo APP_URL; ?>/cart/<?php echo $item['id']; ?>/update" class="quantity-form" data-ajax="cart">
+                                                <?php echo \App\Helpers\CSRF::getTokenField(); ?>
                                                 <input type="hidden" name="quantity" value="<?php echo $item['quantity'] + 1; ?>">
-                                                <button type="submit" class="btn btn-icon btn-outline btn-sm" aria-label="Увеличить количество">
+                                                <button type="submit" class="btn btn-icon btn-outline btn-sm" aria-label="Увеличить количество" <?php echo !$item['is_active'] || $item['quantity'] >= $item['stock'] ? 'disabled' : ''; ?>>
                                                     <img src="<?php echo APP_URL; ?>/public/images/icons/add.svg" alt="" width="16" height="16">
                                                 </button>
                                             </form>
@@ -104,7 +100,8 @@ $total = $subtotal + $shipping;
                                             <?php echo number_format($item['price'] * $item['quantity'], 0, '', ' '); ?> ₽
                                         </div>
 
-                                        <form method="POST" action="<?php echo APP_URL; ?>/api/cart/<?php echo $item['id']; ?>/delete" class="delete-form">
+                                        <form method="POST" action="<?php echo APP_URL; ?>/cart/<?php echo $item['id']; ?>/delete" class="delete-form" data-ajax="cart">
+                                            <?php echo \App\Helpers\CSRF::getTokenField(); ?>
                                             <button type="submit" class="btn btn-icon btn-outline btn-sm" aria-label="Удалить товар">
                                                 <img src="<?php echo APP_URL; ?>/public/images/icons/delete.svg" alt="" width="18" height="18">
                                             </button>
@@ -155,6 +152,5 @@ $total = $subtotal + $shipping;
     </main>
 
     <?php include dirname(__FILE__) . '/includes/footer.php'; ?>
-    <script src="<?php echo \App\Helpers\Asset::js('main.js'); ?>"></script>
 </body>
 </html>

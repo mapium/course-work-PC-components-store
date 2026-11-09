@@ -29,6 +29,8 @@ CREATE TABLE categories (
     meta_description VARCHAR(255),
     parent_id INT,
     icon_path VARCHAR(255),
+    sort_order INT NOT NULL DEFAULT 0,
+    is_visible BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_slug (slug),
@@ -138,11 +140,15 @@ CREATE TABLE reviews (
     id INT PRIMARY KEY AUTO_INCREMENT,
     product_id INT NOT NULL,
     user_id INT,
+    parent_id INT,
     rating INT CHECK (rating >= 1 AND rating <= 5),
     comment TEXT,
     is_approved BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    INDEX idx_parent_id (parent_id),
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id) REFERENCES reviews(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

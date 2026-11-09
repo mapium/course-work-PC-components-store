@@ -12,11 +12,62 @@ class Category {
         $this->conn = $db;
     }
 
-    public function getAll() {
-        $query = "SELECT * FROM " . $this->table . " WHERE parent_id IS NULL ORDER BY name";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    public function getAll($include_hidden = false) {
+        return array_values(array_filter($this->getTree($include_hidden), function ($row) {
+            return $row['parent_id'] === null;
+        }));
+    }
+
+    public function getTree($include_hidden = false) {
+        $rows = $this->conn->query('SELECT * FROM categories ORDER BY sort_order, name, id')->fetchAll(PDO::FETCH_ASSOC);
+        $children = [];
+        foreach ($rows as $row) $children[(int)$row['parent_id']][] = $row;
+        $result = [];
+        $visited = [];
+        $walk = function ($parent, $path, $depth, $visible) use (&$walk, &$result, &$visited, $children, $include_hidden) {
+            foreach ($children[$parent] ?? [] as $row) {
+                if (isset($visited[$row['id']])) continue;
+                $visited[$row['id']] = true;
+                $row['depth'] = $depth;
+                $row['path'] = ($path === '' ? '' : $path . '/') . $row['slug'];
+                $row['visible'] = $visible && (bool)$row['is_visible'];
+                if ($include_hidden || $row['visible']) $result[] = $row;
+                $walk((int)$row['id'], $row['path'], $depth + 1, $row['visible']);
+            }
+        };
+        $walk(0, '', 0, true);
+        return $result;
+    }
+
+    public function getByPath($path, $include_hidden = false) {
+        foreach ($this->getTree($include_hidden) as $row) {
+            if ($row['path'] === $path) return $row;
+        }
+        return false;
+    }
+
+    public function descendantIds($id = null, $include_hidden = false) {
+        $tree = $this->getTree($include_hidden);
+        if ($id === null) return array_map('intval', array_column($tree, 'id'));
+        $path = null;
+        foreach ($tree as $row) if ((int)$row['id'] === (int)$id) $path = $row['path'];
+        if ($path === null) return [];
+        return array_values(array_map(function ($row) { return (int)$row['id']; }, array_filter($tree, function ($row) use ($path) {
+            return $row['path'] === $path || strpos($row['path'], $path . '/') === 0;
+        })));
+    }
+
+    public function trail($id) {
+        $rows = [];
+        foreach ($this->getTree(true) as $row) $rows[$row['id']] = $row;
+        $trail = [];
+        $seen = [];
+        while (isset($rows[$id]) && !isset($seen[$id])) {
+            $seen[$id] = true;
+            array_unshift($trail, $rows[$id]);
+            $id = $rows[$id]['parent_id'];
+        }
+        return $trail;
     }
 
     public function getById($id) {
@@ -36,11 +87,9 @@ class Category {
     }
 
     public function getSubcategories($parent_id) {
-        $query = "SELECT * FROM " . $this->table . " WHERE parent_id = :parent_id ORDER BY name";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':parent_id', $parent_id, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return array_values(array_filter($this->getTree(), function ($row) use ($parent_id) {
+            return (int)$row['parent_id'] === (int)$parent_id;
+        }));
     }
 
     public function create($data) {

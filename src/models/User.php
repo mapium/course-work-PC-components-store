@@ -28,6 +28,12 @@ class User {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    public function getByUsername($username) {
+        $stmt = $this->conn->prepare("SELECT id FROM users WHERE username = :username");
+        $stmt->execute([':username' => $username]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
     public function create($data) {
         $query = "INSERT INTO " . $this->table . " (username, email, password, full_name, phone)
                  VALUES (:username, :email, :password, :full_name, :phone)";
@@ -62,7 +68,7 @@ class User {
     }
 
     public function getAll($limit = 20, $offset = 0) {
-        $query = "SELECT id, username, email, full_name, role, status, created_at FROM " . $this->table . " LIMIT :limit OFFSET :offset";
+        $query = "SELECT id, username, email, full_name, role, status, created_at FROM " . $this->table . " ORDER BY created_at DESC, id DESC LIMIT :limit OFFSET :offset";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);

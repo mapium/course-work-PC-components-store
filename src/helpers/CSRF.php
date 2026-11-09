@@ -20,7 +20,7 @@ class CSRF {
      * @return bool True если токен валиден
      */
     public static function validateToken($token) {
-        if (!isset($_SESSION['csrf_token']) || empty($token)) {
+        if (!isset($_SESSION['csrf_token']) || !is_string($token) || $token === '') {
             return false;
         }
         return hash_equals($_SESSION['csrf_token'], $token);

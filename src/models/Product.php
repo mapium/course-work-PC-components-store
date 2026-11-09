@@ -12,12 +12,28 @@ class Product {
         $this->conn = $db;
     }
 
-    public function getAll($limit = 20, $offset = 0) {
-        $query = "SELECT p.*, pi.image_path as main_image
+    private function ratingColumns() {
+        return "COALESCE((SELECT AVG(r.rating) FROM reviews r
+                    WHERE r.product_id = p.id AND r.is_approved = TRUE
+                    AND r.parent_id IS NULL AND r.rating BETWEEN 1 AND 5), 0) AS average_rating,
+                (SELECT COUNT(*) FROM reviews r
+                    WHERE r.product_id = p.id AND r.is_approved = TRUE
+                    AND r.parent_id IS NULL AND r.rating BETWEEN 1 AND 5) AS review_count";
+    }
+
+    private function imageColumn() {
+        return "(SELECT pi.image_path FROM product_images pi WHERE pi.product_id = p.id
+                    ORDER BY pi.is_main DESC, pi.sort_order, pi.id LIMIT 1) AS main_image,
+                (SELECT pi.image_path FROM product_images pi WHERE pi.product_id = p.id
+                    ORDER BY pi.is_main DESC, pi.sort_order, pi.id LIMIT 1 OFFSET 1) AS hover_image";
+    }
+
+    public function getAll($limit = 20, $offset = 0, $include_inactive = false) {
+        if (!$include_inactive) return $this->getWithFilters([], $limit, $offset);
+        $query = "SELECT p.*, " . $this->imageColumn() . ", " . $this->ratingColumns() . "
                   FROM " . $this->table . " p
-                  LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_main = TRUE
-                  WHERE p.is_active = TRUE
-                  ORDER BY p.created_at DESC
+                  WHERE " . ($include_inactive ? '1 = 1' : 'p.is_active = TRUE') . "
+                  ORDER BY p.created_at DESC, p.id DESC
                   LIMIT :limit OFFSET :offset";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
@@ -26,30 +42,32 @@ class Product {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getById($id) {
-        $query = "SELECT p.*, pi.image_path as main_image
+    public function getById($id, $include_inactive = false) {
+        $query = "SELECT p.*, " . $this->imageColumn() . ", " . $this->ratingColumns() . "
                   FROM " . $this->table . " p
-                  LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_main = TRUE
-                  WHERE p.id = :id AND p.is_active = TRUE";
+                  WHERE p.id = :id";
+        if (!$include_inactive) {
+            $query .= " AND p.is_active = TRUE";
+        }
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $product = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($product && !$include_inactive && !in_array((int)$product['category_id'], (new Category($this->conn))->descendantIds(), true)) return false;
+        return $product;
+    }
+
+    public function getByPath($path) {
+        $slug = basename($path);
+        $stmt = $this->conn->prepare('SELECT id FROM products WHERE slug = ? AND is_active = TRUE');
+        $stmt->execute([$slug]);
+        $id = $stmt->fetchColumn();
+        $product = $id ? $this->getById($id) : false;
+        return $product && \App\Helpers\Url::productPath($product, $this->conn) === '/product/' . $path ? $product : false;
     }
 
     public function getByCategoryId($category_id, $limit = 20, $offset = 0) {
-        $query = "SELECT p.*, pi.image_path as main_image
-                  FROM " . $this->table . " p
-                  LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_main = TRUE
-                  WHERE p.category_id = :category_id AND p.is_active = TRUE
-                  ORDER BY p.created_at DESC
-                  LIMIT :limit OFFSET :offset";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':category_id', $category_id, PDO::PARAM_INT);
-        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
-        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $this->getWithFilters(['category_id' => $category_id], $limit, $offset);
     }
 
     public function search($query, $limit = 20, $offset = 0) {
@@ -57,16 +75,7 @@ class Product {
     }
 
     public function getFeatured($limit = 6) {
-        $query = "SELECT p.*, pi.image_path as main_image
-                  FROM " . $this->table . " p
-                  LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_main = TRUE
-                  WHERE p.is_featured = TRUE AND p.is_active = TRUE
-                  ORDER BY p.created_at DESC
-                  LIMIT :limit";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $this->getWithFilters(['featured' => true], $limit);
     }
 
     public function create($data) {
@@ -117,9 +126,8 @@ class Product {
     }
 
     public function getSimilarProducts($product_id, $category_id, $limit = 4) {
-        $query = "SELECT p.*, pi.image_path as main_image
+        $query = "SELECT p.*, " . $this->imageColumn() . ", " . $this->ratingColumns() . "
                   FROM " . $this->table . " p
-                  LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_main = TRUE
                   WHERE p.category_id = :category_id
                   AND p.id != :product_id
                   AND p.is_active = TRUE
@@ -135,13 +143,13 @@ class Product {
 
     public function getReviews($product_id) {
         // Получаем основные отзывы (не ответы)
-        $query = "SELECT r.*, u.username, u.full_name
+        $query = "SELECT r.*, u.username, u.full_name, u.role AS user_role
                   FROM reviews r
                   LEFT JOIN users u ON r.user_id = u.id
                   WHERE r.product_id = :product_id
                   AND r.is_approved = TRUE
                   AND r.parent_id IS NULL
-                  ORDER BY r.created_at DESC";
+                  ORDER BY r.created_at DESC, r.id DESC";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':product_id', $product_id, PDO::PARAM_INT);
         $stmt->execute();
@@ -149,7 +157,7 @@ class Product {
 
         // Для каждого отзыва получаем ответы
         foreach ($reviews as &$review) {
-            $query_replies = "SELECT r.*, u.username, u.full_name
+            $query_replies = "SELECT r.*, u.username, u.full_name, u.role AS user_role
                              FROM reviews r
                              LEFT JOIN users u ON r.user_id = u.id
                              WHERE r.parent_id = :parent_id
@@ -165,17 +173,21 @@ class Product {
     }
 
     public function getImages($product_id) {
-        $query = "SELECT * FROM product_images WHERE product_id = :product_id ORDER BY sort_order";
+        $query = "SELECT * FROM product_images WHERE product_id = :product_id ORDER BY sort_order, id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':product_id', $product_id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getWithFilters($filters = [], $limit = 100, $offset = 0) {
-        $query = "SELECT DISTINCT p.*, pi.image_path as main_image, c.name as category_name
+    public function countWithFilters($filters = []) {
+        return $this->getWithFilters($filters, 1, 0, true);
+    }
+
+    public function getWithFilters($filters = [], $limit = 100, $offset = 0, $count_only = false) {
+        $columns = $count_only ? 'COUNT(DISTINCT p.id)' : 'DISTINCT p.*, ' . $this->imageColumn() . ', ' . $this->ratingColumns() . ', c.name AS category_name';
+        $query = "SELECT $columns
                   FROM " . $this->table . " p
-                  LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_main = TRUE
                   LEFT JOIN categories c ON p.category_id = c.id";
 
         $params = [];
@@ -205,13 +217,15 @@ class Product {
             }
         }
 
-        $where_clauses = ["p.is_active = TRUE"];
+        $ids = (new Category($this->conn))->descendantIds(!empty($filters['category_id']) ? (int)$filters['category_id'] : null);
+        $where_clauses = ["p.is_active = TRUE", 'p.category_id IN (' . implode(',', $ids ?: [0]) . ')'];
+        if (!empty($filters['featured'])) $where_clauses[] = 'p.is_featured = TRUE';
 
         $search = is_string($filters['search'] ?? null) ? trim($filters['search']) : '';
         if ($search !== '') {
             $terms = preg_split('/\s+/u', $search, -1, PREG_SPLIT_NO_EMPTY);
             if ($terms === false || strlen($search) > 480) {
-                return [];
+                return $count_only ? 0 : [];
             }
 
             foreach ($terms as $index => $term) {
@@ -237,22 +251,17 @@ class Product {
             }
         }
 
-        if (!empty($filters['category_id'])) {
-            $where_clauses[] = "p.category_id = :category_id";
-            $params[':category_id'] = $filters['category_id'];
-        }
-
         if (!empty($filters['brand'])) {
             $where_clauses[] = "p.brand = :brand";
             $params[':brand'] = $filters['brand'];
         }
 
-        if (!empty($filters['price_min']) && is_numeric($filters['price_min'])) {
+        if (isset($filters['price_min']) && is_numeric($filters['price_min'])) {
             $where_clauses[] = "p.price >= :price_min";
             $params[':price_min'] = $filters['price_min'];
         }
 
-        if (!empty($filters['price_max']) && is_numeric($filters['price_max'])) {
+        if (isset($filters['price_max']) && is_numeric($filters['price_max'])) {
             $where_clauses[] = "p.price <= :price_max";
             $params[':price_max'] = $filters['price_max'];
         }
@@ -261,15 +270,18 @@ class Product {
             $query .= " WHERE " . implode(' AND ', $where_clauses);
         }
 
-        if ($search !== '') {
+        $sort = $filters['sort'] ?? ($search !== '' ? 'relevance' : 'newest');
+        if (!$count_only && $sort === 'relevance' && $search !== '') {
             $params[':search_exact'] = $search;
             $params[':search_prefix'] = strtr($search, ['!' => '!!', '%' => '!%', '_' => '!_']) . '%';
             $query .= " ORDER BY (p.name = :search_exact) DESC,
                        (p.name LIKE :search_prefix ESCAPE '!') DESC, p.created_at DESC, p.id DESC";
-        } else {
-            $query .= " ORDER BY p.created_at DESC";
+        } elseif (!$count_only) {
+            $sorts = ['price_asc' => 'p.price ASC, p.id DESC', 'price_desc' => 'p.price DESC, p.id DESC',
+                'rating' => 'average_rating DESC, review_count DESC, p.id DESC'];
+            $query .= ' ORDER BY ' . ($sorts[$sort] ?? 'p.created_at DESC, p.id DESC');
         }
-        $query .= " LIMIT :limit OFFSET :offset";
+        if (!$count_only) $query .= " LIMIT :limit OFFSET :offset";
 
         $stmt = $this->conn->prepare($query);
 
@@ -277,23 +289,27 @@ class Product {
             $stmt->bindValue($key, $value);
         }
 
-        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        if (!$count_only) {
+            $stmt->bindValue(':limit', max(1, min(100, (int)$limit)), PDO::PARAM_INT);
+            $stmt->bindValue(':offset', max(0, (int)$offset), PDO::PARAM_INT);
+        }
 
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $count_only ? (int)$stmt->fetchColumn() : $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getAvailableSpecifications($category_id) {
+    public function getAvailableSpecifications($category_id, $brand = '') {
+        $ids = (new Category($this->conn))->descendantIds($category_id);
         $query = "SELECT DISTINCT ps.spec_name, ps.spec_value
                   FROM product_specifications ps
                   INNER JOIN products p ON ps.product_id = p.id
-                  WHERE p.category_id = :category_id
+                  WHERE p.category_id IN (" . implode(',', $ids ?: [0]) . ")
                   AND p.is_active = TRUE
+                  " . ($brand !== '' ? 'AND p.brand = :brand' : '') . "
                   ORDER BY ps.spec_name, ps.spec_value";
 
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':category_id', $category_id, PDO::PARAM_INT);
+        if ($brand !== '') $stmt->bindValue(':brand', $brand);
         $stmt->execute();
 
         $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -316,18 +332,14 @@ class Product {
     }
 
     public function getAvailableBrands($category_id = null) {
+        $ids = (new Category($this->conn))->descendantIds($category_id);
         $query = "SELECT DISTINCT brand
                   FROM " . $this->table . "
                   WHERE is_active = TRUE
                   AND brand IS NOT NULL
-                  AND brand != ''";
+                  AND brand != '' AND category_id IN (" . implode(',', $ids ?: [0]) . ')';
 
         $params = [];
-
-        if ($category_id !== null) {
-            $query .= " AND category_id = :category_id";
-            $params[':category_id'] = $category_id;
-        }
 
         $query .= " ORDER BY brand";
 

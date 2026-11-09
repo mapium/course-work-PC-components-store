@@ -1,9 +1,6 @@
 <?php
-require_once dirname(__DIR__) . '/config/Database.php';
 require_once dirname(__DIR__) . '/models/Cart.php';
 
-$db = new \App\Config\Database();
-$pdo = $db->connect();
 $cart_model = new \App\Models\Cart($pdo);
 
 // Получаем ID пользователя или сессии
@@ -32,15 +29,18 @@ if ($user_id) {
     $stmt->execute([$user_id]);
     $user_data = $stmt->fetch(\PDO::FETCH_ASSOC);
 }
+$checkout_values = $_SESSION['checkout_old'] ?? [];
+unset($_SESSION['checkout_old']);
+$checkout_values += [
+    'name' => $user_data['full_name'] ?? '', 'email' => $user_data['email'] ?? '',
+    'phone' => $user_data['phone'] ?? '', 'city' => '', 'postal_code' => '', 'address' => '',
+    'comment' => '', 'payment_method' => 'card'
+];
 ?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="app-url" content="<?php echo APP_URL; ?>">
-    <title>Оформление заказа - PCComponents Store</title>
-    <link rel="stylesheet" href="<?php echo \App\Helpers\Asset::css('style.css'); ?>">
+    <?php include __DIR__ . '/includes/head.php'; ?>
 </head>
 <body>
     <?php include dirname(__FILE__) . '/includes/header.php'; ?>
@@ -56,7 +56,11 @@ if ($user_id) {
 
             <div class="layout-split checkout-container">
                 <div class="checkout-form-section">
-                    <form id="checkoutForm" class="checkout-form" method="POST" action="<?php echo APP_URL; ?>/api/orders/create">
+                    <?php if (!$user_id): ?>
+                        <div class="alert alert-info">Для оформления заказа <a href="<?php echo APP_URL; ?>/auth">войдите в аккаунт</a>. Товары останутся в корзине.</div>
+                    <?php endif; ?>
+                    <form id="checkoutForm" class="checkout-form" method="POST" action="<?php echo APP_URL; ?>/checkout">
+                        <?php echo \App\Helpers\CSRF::getTokenField(); ?>
                         <div class="form-section">
                             <h2 class="form-section-title">Контактная информация</h2>
 
@@ -67,7 +71,7 @@ if ($user_id) {
                                        name="name"
                                        class="form-input"
                                        required
-                                       value="<?php echo htmlspecialchars($user_data['full_name'] ?? ''); ?>"
+                                       maxlength="100" value="<?php echo htmlspecialchars($checkout_values['name']); ?>"
                                        placeholder="Иван Иванов">
                             </div>
 
@@ -79,7 +83,7 @@ if ($user_id) {
                                            name="email"
                                            class="form-input"
                                            required
-                                           value="<?php echo htmlspecialchars($user_data['email'] ?? ''); ?>"
+                                           maxlength="100" value="<?php echo htmlspecialchars($checkout_values['email']); ?>"
                                            placeholder="example@mail.com">
                                 </div>
 
@@ -90,7 +94,7 @@ if ($user_id) {
                                            name="phone"
                                            class="form-input"
                                            required
-                                           value="<?php echo htmlspecialchars($user_data['phone'] ?? ''); ?>"
+                                           maxlength="20" value="<?php echo htmlspecialchars($checkout_values['phone']); ?>"
                                            placeholder="+7 (999) 123-45-67">
                                 </div>
                             </div>
@@ -104,7 +108,8 @@ if ($user_id) {
                                     <label for="city" class="form-label">Город *</label>
                                     <input type="text"
                                            id="city"
-                                           name="city"
+                                            name="city"
+                                            maxlength="100" value="<?php echo htmlspecialchars($checkout_values['city']); ?>"
                                            class="form-input"
                                            required
                                            placeholder="Москва">
@@ -114,7 +119,8 @@ if ($user_id) {
                                     <label for="postal_code" class="form-label">Индекс</label>
                                     <input type="text"
                                            id="postal_code"
-                                           name="postal_code"
+                                            name="postal_code"
+                                            maxlength="6" pattern="[0-9]{6}" value="<?php echo htmlspecialchars($checkout_values['postal_code']); ?>"
                                            class="form-input"
                                            placeholder="123456">
                                 </div>
@@ -125,6 +131,7 @@ if ($user_id) {
                                 <input type="text"
                                        id="address"
                                        name="address"
+                                       maxlength="255" value="<?php echo htmlspecialchars($checkout_values['address']); ?>"
                                        class="form-input"
                                        required
                                        placeholder="ул. Пушкина, д. 10, кв. 25">
@@ -133,10 +140,11 @@ if ($user_id) {
                             <div class="form-group">
                                 <label for="comment" class="form-label">Комментарий к заказу</label>
                                 <textarea id="comment"
-                                          name="comment"
+                                           name="comment"
+                                           maxlength="5000"
                                           class="form-input"
                                           rows="3"
-                                          placeholder="Дополнительная информация для курьера"></textarea>
+                                           placeholder="Дополнительная информация для курьера"><?php echo htmlspecialchars($checkout_values['comment']); ?></textarea>
                             </div>
                         </div>
 
@@ -145,7 +153,7 @@ if ($user_id) {
 
                             <div class="payment-methods">
                                 <label class="payment-method-card">
-                                    <input type="radio" name="payment_method" value="card" checked>
+                                    <input type="radio" name="payment_method" value="card" <?php echo $checkout_values['payment_method'] === 'card' ? 'checked' : ''; ?>>
                                     <div class="payment-method-content">
                                         <img src="<?php echo APP_URL; ?>/public/images/icons/credit_card.svg" alt="" width="24" height="24">
                                         <div>
@@ -156,7 +164,7 @@ if ($user_id) {
                                 </label>
 
                                 <label class="payment-method-card">
-                                    <input type="radio" name="payment_method" value="cash">
+                                    <input type="radio" name="payment_method" value="cash" <?php echo $checkout_values['payment_method'] === 'cash' ? 'checked' : ''; ?>>
                                     <div class="payment-method-content">
                                         <img src="<?php echo APP_URL; ?>/public/images/icons/payments.svg" alt="" width="24" height="24">
                                         <div>
@@ -215,7 +223,7 @@ if ($user_id) {
                             </div>
                         </div>
 
-                        <button type="submit" form="checkoutForm" class="btn btn-lg btn-block">
+                        <button type="submit" form="checkoutForm" class="btn btn-lg btn-block" <?php echo $user_id ? '' : 'disabled'; ?>>
                             <img src="<?php echo APP_URL; ?>/public/images/icons/check_circle.svg" alt="" width="20" height="20">
                             Оформить заказ
                         </button>
@@ -231,69 +239,5 @@ if ($user_id) {
     </main>
 
     <?php include dirname(__FILE__) . '/includes/footer.php'; ?>
-    <script src="<?php echo \App\Helpers\Asset::js('main.js'); ?>"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Checkout page loaded');
-
-            const checkoutForm = document.getElementById('checkoutForm');
-            console.log('Form found:', checkoutForm);
-
-            if (!checkoutForm) {
-                console.error('Checkout form not found!');
-                return;
-            }
-
-            // Обработка формы оформления заказа
-            checkoutForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                console.log('Form submitted');
-
-                const form = this;
-                const formData = new FormData(form);
-                const submitBtn = document.querySelector('button[form="checkoutForm"]');
-
-                console.log('Submit button:', submitBtn);
-
-                // Отключаем кнопку на время отправки
-                if (submitBtn) {
-                    submitBtn.disabled = true;
-                    submitBtn.textContent = 'Оформление...';
-                }
-
-                console.log('Sending request to:', form.action);
-
-                fetch(form.action, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => {
-                    console.log('Response status:', response.status);
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Response data:', data);
-                    if (data.success) {
-                        // Редиректим на страницу успеха
-                        window.location.href = '<?php echo APP_URL; ?>/order-success?id=' + data.order_id;
-                    } else {
-                        showNotification(data.message || 'Ошибка при оформлении заказа', 'error');
-                        if (submitBtn) {
-                            submitBtn.disabled = false;
-                            submitBtn.innerHTML = '<img src="<?php echo APP_URL; ?>/public/images/icons/check_circle.svg" alt="" width="20" height="20"> Оформить заказ';
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showNotification('Ошибка при оформлении заказа', 'error');
-                    if (submitBtn) {
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = '<img src="<?php echo APP_URL; ?>/public/images/icons/check_circle.svg" alt="" width="20" height="20"> Оформить заказ';
-                    }
-                });
-            });
-        });
-    </script>
 </body>
 </html>

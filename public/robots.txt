@@ -1,33 +1,15 @@
 User-agent: *
-Allow: /
+Allow: /course-work-PC-components-store/
+Disallow: /course-work-PC-components-store/admin
+Disallow: /course-work-PC-components-store/account
+Disallow: /course-work-PC-components-store/api/
+Disallow: /course-work-PC-components-store/cart
+Disallow: /course-work-PC-components-store/checkout
+Disallow: /course-work-PC-components-store/auth
+Disallow: /course-work-PC-components-store/logout
+Disallow: /course-work-PC-components-store/order-success
+Disallow: /course-work-PC-components-store/src/
+Disallow: /course-work-PC-components-store/database/
+Disallow: /course-work-PC-components-store/tests/
 
-Allow: /catalog
-Allow: /product/
-Allow: /category/
-
-Disallow: /admin
-Disallow: /account
-Disallow: /api/
-Disallow: /cart
-Disallow: /checkout
-Disallow: /auth
-Disallow: /src/
-Disallow: /database/
-
-User-agent: Yandex
-Allow: /
-Disallow: /admin
-Disallow: /api/
-Crawl-delay: 1
-
-# Для Google
-User-agent: Googlebot
-Allow: /
-Disallow: /admin
-Disallow: /api/
-
-# Указываем путь к sitemap
-Sitemap: <?php echo APP_URL; ?>/sitemap.xml
-
-# Host для Яндекса
-Host: pccomponents.local
+Sitemap: http://localhost/course-work-PC-components-store/sitemap.xml

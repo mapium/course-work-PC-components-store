@@ -53,6 +53,10 @@ class Auth {
         return self::getCurrentRole() === $role;
     }
 
+    public static function canManageStore() {
+        return self::isLoggedIn() && in_array(self::getCurrentRole(), ['admin', 'manager'], true);
+    }
+
     public static function checkSessionTimeout() {
         if (isset($_SESSION['login_time'])) {
             if (time() - $_SESSION['login_time'] > SESSION_TIMEOUT) {

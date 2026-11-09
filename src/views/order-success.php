@@ -1,9 +1,7 @@
 <?php
-require_once dirname(__DIR__) . '/config/Database.php';
+/** @var \PDO $pdo */
 require_once dirname(__DIR__) . '/models/Order.php';
 
-$db = new \App\Config\Database();
-$pdo = $db->connect();
 $order_model = new \App\Models\Order($pdo);
 
 // Получаем ID заказа из параметра
@@ -21,6 +19,11 @@ if (!$order) {
     header('Location: ' . APP_URL . '/');
     exit;
 }
+if (!\App\Helpers\Auth::canManageStore() && (!\App\Helpers\Auth::isLoggedIn() || $order['user_id'] != \App\Helpers\Auth::getCurrentUserId())) {
+    http_response_code(403);
+    include __DIR__ . '/404.php';
+    exit;
+}
 
 // Получаем товары заказа
 $items = $order_model->getItems($order_id);
@@ -28,10 +31,7 @@ $items = $order_model->getItems($order_id);
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Заказ оформлен - PCComponents Store</title>
-    <link rel="stylesheet" href="<?php echo \App\Helpers\Asset::css('style.css'); ?>">
+    <?php include __DIR__ . '/includes/head.php'; ?>
 </head>
 <body>
     <?php include dirname(__FILE__) . '/includes/header.php'; ?>
@@ -105,15 +105,7 @@ $items = $order_model->getItems($order_id);
                             <div class="detail-label">Статус</div>
                             <div class="detail-value">
                                 <?php
-                                    $status_labels = [
-                                        'pending' => 'Ожидает обработки',
-                                        'processing' => 'В обработке',
-                                        'assembled' => 'Собран',
-                                        'shipped' => 'Отправлен',
-                                        'delivered' => 'Доставлен',
-                                        'cancelled' => 'Отменён'
-                                    ];
-                                    echo $status_labels[$order['status']] ?? 'Ожидает обработки';
+                                    echo htmlspecialchars(\App\Models\Order::statusInfo($order['status'])['label']);
                                 ?>
                             </div>
                         </div>

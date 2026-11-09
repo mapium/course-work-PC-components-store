@@ -24,8 +24,9 @@
         <nav class="navbar">
             <div class="container">
                 <div class="navbar-content">
-                    <a href="<?php echo APP_URL; ?>/" class="logo">
-                        <h1>PCComponents Store</h1>
+                    <a href="<?php echo APP_URL; ?>/" class="logo" aria-label="PCComponents Store — главная страница">
+                        <img src="<?php echo \App\Helpers\Asset::image('pc_logo.svg'); ?>" class="logo-image" alt="" width="46" height="48">
+                        <span class="logo-title">PCComponents Store</span>
                     </a>
 
                     <!-- Поиск -->
@@ -70,6 +71,8 @@
                             <a href="<?php echo APP_URL; ?>/cart">
                                 <img src="<?php echo APP_URL; ?>/public/images/icons/shopping_cart.svg" alt="" width="18" height="18" style="display: inline-block; vertical-align: middle;">
                                 Корзина
+                                <?php $header_cart_count = (int)(new \App\Models\Cart($pdo))->getCount(\App\Helpers\Auth::getCurrentUserId(), session_id()); ?>
+                                <span class="cart-count" data-cart-count <?php echo $header_cart_count === 0 ? 'hidden' : ''; ?>><?php echo $header_cart_count; ?></span>
                             </a>
                         </li>
                         <?php if (\App\Helpers\Auth::isLoggedIn()): ?>
@@ -142,18 +145,19 @@
             <button type="button" id="search-clear" class="btn btn-icon btn-ghost search-clear" aria-label="Очистить поиск" hidden>
                 <img src="<?php echo APP_URL; ?>/public/images/icons/close.svg" alt="" width="16" height="16">
             </button>
+            <button type="submit" class="btn btn-icon btn-ghost" aria-label="Найти товары"><img src="<?php echo APP_URL; ?>/public/images/icons/search.svg" alt="" width="20" height="20"></button>
             <button type="button" id="search-close" class="btn btn-ghost search-close" aria-label="Закрыть поиск (Esc)">
                 <kbd class="search-key" aria-hidden="true">Esc</kbd>
             </button>
         </form>
-        <p id="search-help" class="sr-only">Введите название, бренд или характеристику товара. Стрелки вверх и вниз выбирают результат, Enter открывает его, Escape закрывает поиск.</p>
+        <p id="search-help" class="sr-only">Введите название, бренд или характеристику. Стрелки выбирают подсказку, Enter открывает результат, Escape закрывает окно.</p>
         <div class="search-body">
             <div id="search-message" class="search-message" hidden>
                 <img src="<?php echo APP_URL; ?>/public/images/icons/search_off.svg" alt="" width="28" height="28" id="search-message-icon">
                 <strong id="search-message-title"></strong>
                 <p id="search-message-description"></p>
             </div>
-            <div id="search-results" class="search-results" role="listbox" aria-label="Результаты поиска"></div>
+            <div id="search-results" class="search-results" role="listbox" aria-label="Результаты поиска"><?php include __DIR__ . '/search-results.php'; ?></div>
         </div>
         <p id="search-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
         <div class="search-footer" aria-hidden="true">
@@ -163,5 +167,5 @@
         </div>
     </dialog>
 
-    <script src="<?php echo APP_URL; ?>/public/js/theme-toggle.js"></script>
-    <script src="<?php echo \App\Helpers\Asset::js('search.js'); ?>" defer></script>
+    <?php include __DIR__ . '/messages.php'; ?>
+    <?php include __DIR__ . '/scripts.php'; ?>

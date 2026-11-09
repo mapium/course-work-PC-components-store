@@ -5,6 +5,9 @@ namespace App\Controllers;
 use App\Models\Order;
 use App\Models\Cart as CartModel;
 use App\Helpers\Auth;
+use App\Helpers\CSRF;
+use App\Helpers\Request;
+use App\Helpers\Response;
 
 class OrderController {
     private $db;
@@ -15,150 +18,157 @@ class OrderController {
         $this->order_model = new Order($db);
     }
 
-    public function create() {
-        header('Content-Type: application/json');
-
+    public function create($redirect = null) {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['success' => false, 'message' => 'Invalid method']);
+            Response::send(['success' => false, 'message' => 'Недопустимый метод запроса'], 405, $redirect);
             return;
         }
-
-        $user_id = Auth::getCurrentUserId();
-        $session_id = session_id();
-
-        // Получаем данные из POST
-        $name = $_POST['name'] ?? null;
-        $email = $_POST['email'] ?? null;
-        $phone = $_POST['phone'] ?? null;
-        $city = $_POST['city'] ?? null;
-        $postal_code = $_POST['postal_code'] ?? null;
-        $address = $_POST['address'] ?? null;
-        $comment = $_POST['comment'] ?? null;
-        $payment_method = $_POST['payment_method'] ?? 'card';
-
-        // Валидация
-        if (!$name || !$email || !$phone || !$city || !$address) {
-            echo json_encode(['success' => false, 'message' => 'Пожалуйста, заполните все обязательные поля']);
+        $data = [];
+        foreach (['name', 'email', 'phone', 'city', 'postal_code', 'address', 'comment', 'payment_method'] as $field) {
+            $data[$field] = Request::text($_POST, $field);
+        }
+        if ($redirect !== null) {
+            $_SESSION['checkout_old'] = $data;
+        }
+        if (!Auth::isLoggedIn()) {
+            Response::send(['success' => false, 'message' => 'Войдите в аккаунт для оформления заказа'], 401, $redirect);
             return;
         }
-
-        // Получаем корзину
-        $cart_model = new CartModel($this->db);
-        $items = $cart_model->getItems($user_id, $session_id);
-
-        if (empty($items)) {
-            echo json_encode(['success' => false, 'message' => 'Корзина пуста']);
+        if (!CSRF::validateToken($_POST['csrf_token'] ?? '')) {
+            Response::send(['success' => false, 'message' => 'Ошибка безопасности. Обновите страницу и повторите отправку'], 403, $redirect);
             return;
         }
-
-        // Подсчитываем сумму
-        $subtotal = 0;
-        foreach ($items as $item) {
-            $subtotal += $item['price'] * $item['quantity'];
+        foreach (['name', 'email', 'phone', 'city', 'address'] as $field) {
+            if ($data[$field] === '') {
+                Response::send(['success' => false, 'message' => 'Пожалуйста, заполните все обязательные поля'], 400, $redirect);
+                return;
+            }
         }
-        $shipping = 300;
-        $total = $subtotal + $shipping;
-
-        // Генерируем номер заказа
-        $order_number = 'ORD-' . date('Ymd') . '-' . strtoupper(substr(md5(uniqid()), 0, 6));
+        if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL) || strlen($data['email']) > 100) {
+            Response::send(['success' => false, 'message' => 'Укажите корректный email'], 400, $redirect);
+            return;
+        }
+        if (!Request::validPhone($data['phone'])) {
+            Response::send(['success' => false, 'message' => 'Укажите корректный телефон (не менее 10 цифр)'], 400, $redirect);
+            return;
+        }
+        if (Request::length($data['name']) > 100 || Request::length($data['city']) > 100
+            || Request::length($data['address']) > 255 || Request::length($data['comment']) > 5000
+            || ($data['postal_code'] !== '' && preg_match('/\A\d{6}\z/', $data['postal_code']) !== 1)) {
+            Response::send(['success' => false, 'message' => 'Проверьте длину контактных данных, адреса и шестизначный индекс'], 400, $redirect);
+            return;
+        }
+        if (!in_array($data['payment_method'], ['card', 'cash'], true)) {
+            Response::send(['success' => false, 'message' => 'Выберите доступный способ оплаты'], 400, $redirect);
+            return;
+        }
 
         try {
             $this->db->beginTransaction();
-
-            // Создаем заказ
-            $full_address = $city . ', ' . $address;
-            if ($postal_code) {
-                $full_address = $postal_code . ', ' . $full_address;
+            $cart_model = new CartModel($this->db);
+            $items = $cart_model->getItems(Auth::getCurrentUserId(), session_id());
+            if (!$items) {
+                $this->db->rollBack();
+                Response::send(['success' => false, 'message' => 'Корзина пуста'], 400, $redirect);
+                return;
             }
-
-            $order_data = [
-                'user_id' => $user_id,
-                'order_number' => $order_number,
-                'total_amount' => $total,
-                'delivery_address' => $full_address,
-                'delivery_method' => 'courier',
-                'payment_method' => $payment_method
-            ];
-
-            $this->order_model->create($order_data);
-            $order_id = $this->db->lastInsertId();
-
-            // Добавляем товары в заказ
-            $stmt = $this->db->prepare("
-                INSERT INTO order_items (order_id, product_id, quantity, unit_price, total_price)
-                VALUES (?, ?, ?, ?, ?)
-            ");
-
+            $subtotal_cents = 0;
             foreach ($items as $item) {
-                $item_total = $item['price'] * $item['quantity'];
-                $stmt->execute([
-                    $order_id,
-                    $item['product_id'],
-                    $item['quantity'],
-                    $item['price'],
-                    $item_total
-                ]);
+                if (!$item['is_active'] || $item['quantity'] < 1 || $item['quantity'] > $item['stock']) {
+                    $this->db->rollBack();
+                    Response::send(['success' => false, 'message' => 'Проверьте наличие и количество товаров в корзине'], 400, $redirect);
+                    return;
+                }
+                $subtotal_cents += (int)round($item['price'] * 100) * (int)$item['quantity'];
             }
-
-            // Очищаем корзину
-            $cart_model->clear($user_id, $session_id);
-
-            $this->db->commit();
-
-            echo json_encode([
-                'success' => true,
-                'message' => 'Заказ успешно оформлен',
-                'order_id' => $order_id,
-                'order_number' => $order_number
+            $order_number = 'ORD-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(4)));
+            $address = $data['city'] . ', ' . $data['address'];
+            if ($data['postal_code'] !== '') {
+                $address = $data['postal_code'] . ', ' . $address;
+            }
+            $notes = 'Получатель: ' . $data['name'] . "\nEmail: " . $data['email'] . "\nТелефон: " . $data['phone'];
+            if ($data['comment'] !== '') {
+                $notes .= "\nКомментарий: " . $data['comment'];
+            }
+            // Цены и доставка берутся на сервере, клиентская сумма не используется.
+            $this->order_model->create([
+                'user_id' => Auth::getCurrentUserId(), 'order_number' => $order_number,
+                'total_amount' => ($subtotal_cents + 30000) / 100, 'delivery_address' => $address,
+                'delivery_method' => 'courier', 'payment_method' => $data['payment_method'], 'notes' => $notes
             ]);
+            $order_id = (int)$this->db->lastInsertId();
+            $stmt = $this->db->prepare("INSERT INTO order_items (order_id, product_id, quantity, unit_price, total_price)
+                VALUES (?, ?, ?, ?, ?)");
+            foreach ($items as $item) {
+                $item_total = (int)round($item['price'] * 100) * (int)$item['quantity'] / 100;
+                $stmt->execute([$order_id, $item['product_id'], $item['quantity'], $item['price'], $item_total]);
+            }
+            $cart_model->clear(Auth::getCurrentUserId(), session_id());
+            $this->db->commit();
+            unset($_SESSION['checkout_old']);
+            Response::send([
+                'success' => true, 'message' => 'Заказ успешно оформлен',
+                'order_id' => $order_id, 'order_number' => $order_number
+            ], 200, $redirect === null ? null : '/order-success?id=' . $order_id);
+        } catch (\PDOException $exception) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            Response::send(['success' => false, 'message' => 'Не удалось создать заказ. Попробуйте ещё раз'], 500, $redirect);
+        }
+    }
 
-        } catch (\Exception $e) {
-            $this->db->rollBack();
-            echo json_encode(['success' => false, 'message' => 'Ошибка при создании заказа: ' . $e->getMessage()]);
+    public function updateStatus($redirect = null) {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            Response::send(['success' => false, 'message' => 'Недопустимый метод запроса'], 405, $redirect);
+            return;
+        }
+        if (!Auth::canManageStore()) {
+            Response::send(['success' => false, 'message' => 'Менять статус может только менеджер или администратор'], 403, $redirect);
+            return;
+        }
+        $data = Request::input();
+        if (!CSRF::validateToken($data['csrf_token'] ?? '')) {
+            Response::send(['success' => false, 'message' => 'Ошибка безопасности. Обновите страницу'], 403, $redirect);
+            return;
+        }
+        $order_id = Request::integer($data, 'order_id');
+        $status = Request::text($data, 'status');
+        if ($order_id <= 0 || !isset(Order::STATUSES[$status])) {
+            Response::send(['success' => false, 'message' => 'Укажите существующий заказ и допустимый статус'], 400, $redirect);
+            return;
+        }
+        try {
+            if (!$this->order_model->getById($order_id)) {
+                Response::send(['success' => false, 'message' => 'Заказ не найден'], 404, $redirect);
+                return;
+            }
+            $this->order_model->updateStatus($order_id, $status);
+            Response::send(['success' => true, 'message' => 'Статус заказа обновлён'], 200, $redirect);
+        } catch (\PDOException $exception) {
+            Response::send(['success' => false, 'message' => 'Не удалось изменить статус заказа'], 500, $redirect);
         }
     }
 
     public function getById() {
-        header('Content-Type: application/json');
-
-        $id = $_GET['id'] ?? null;
-
-        if (!$id) {
-            echo json_encode(['success' => false, 'message' => 'ID required']);
-            return;
-        }
-
-        $order = $this->order_model->getById($id);
-
+        $id = Request::integer($_GET, 'id');
+        $order = $id > 0 ? $this->order_model->getById($id) : null;
         if (!$order) {
-            echo json_encode(['success' => false, 'message' => 'Order not found']);
+            Response::send(['success' => false, 'message' => 'Заказ не найден'], 404);
             return;
         }
-
-        $items = $this->order_model->getItems($id);
-
-        echo json_encode([
-            'success' => true,
-            'order' => $order,
-            'items' => $items
-        ]);
+        if (!Auth::canManageStore() && (!Auth::isLoggedIn() || $order['user_id'] != Auth::getCurrentUserId())) {
+            Response::send(['success' => false, 'message' => 'Недостаточно прав для просмотра заказа'], 403);
+            return;
+        }
+        Response::send(['success' => true, 'order' => $order, 'items' => $this->order_model->getItems($id)]);
     }
 
     public function getUserOrders() {
-        header('Content-Type: application/json');
-
-        $user_id = Auth::getCurrentUserId();
-
-        if (!$user_id) {
-            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        if (!Auth::isLoggedIn()) {
+            Response::send(['success' => false, 'message' => 'Необходимо авторизоваться'], 401);
             return;
         }
-
-        $orders = $this->order_model->getByUserId($user_id);
-
-        echo json_encode([
-            'success' => true,
-            'orders' => $orders
-        ]);
+        Response::send(['success' => true, 'orders' => $this->order_model->getByUserId(Auth::getCurrentUserId())]);
     }
 }

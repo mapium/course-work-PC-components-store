@@ -7,7 +7,7 @@ session_start();
 header('Content-Type: text/html; charset=utf-8');
 
 // Определяем базовый путь
-define('BASE_PATH', dirname(__DIR__));
+if (!defined('BASE_PATH')) define('BASE_PATH', dirname(__DIR__));
 
 // Автозагрузка классов
 spl_autoload_register(function ($class) {
@@ -17,8 +17,9 @@ spl_autoload_register(function ($class) {
         return;
     }
 
-    $relative_class = substr($class, strlen($prefix));
-    $file = BASE_PATH . '/src/' . str_replace('\\', '/', $relative_class) . '.php';
+    $parts = explode('\\', substr($class, strlen($prefix)));
+    $parts[0] = strtolower($parts[0]);
+    $file = BASE_PATH . '/src/' . implode('/', $parts) . '.php';
 
     if (file_exists($file)) {
         require_once $file;
@@ -70,6 +71,12 @@ if (!empty($_GET['url'])) {
 
 $path = rtrim($path, '/') ?: '/';
 
+if ($path === '/sitemap.xml' || $path === '/robots.txt') {
+    if (!in_array($request_method, ['GET', 'HEAD'], true)) { http_response_code(405); header('Allow: GET, HEAD'); exit; }
+    include BASE_PATH . '/src/views/' . ($path === '/sitemap.xml' ? 'sitemap.php' : 'robots.php');
+    exit;
+}
+
 // Маршруты API
 if (strpos($path, '/api/') === 0) {
     if ($path === '/api/search' && $request_method === 'GET') {
@@ -79,19 +86,19 @@ if (strpos($path, '/api/') === 0) {
     }
 
     if ($path === '/api/reviews/add' && $request_method === 'POST') {
-        $controller = new \App\Controllers\ReviewController();
+        $controller = new \App\Controllers\ReviewController($pdo);
         $controller->addReview();
         exit;
     }
 
     if ($path === '/api/reviews/update' && $request_method === 'POST') {
-        $controller = new \App\Controllers\ReviewController();
+        $controller = new \App\Controllers\ReviewController($pdo);
         $controller->updateReview();
         exit;
     }
 
     if ($path === '/api/reviews/delete' && $request_method === 'POST') {
-        $controller = new \App\Controllers\ReviewController();
+        $controller = new \App\Controllers\ReviewController($pdo);
         $controller->deleteReview();
         exit;
     }
@@ -166,6 +173,12 @@ if (strpos($path, '/api/') === 0) {
     if ($path === '/api/orders/create' && $request_method === 'POST') {
         $controller = new \App\Controllers\OrderController($pdo);
         $controller->create();
+        exit;
+    }
+
+    if ($path === '/api/orders/status' && $request_method === 'POST') {
+        $controller = new \App\Controllers\OrderController($pdo);
+        $controller->updateStatus();
         exit;
     }
 
@@ -244,6 +257,54 @@ if (strpos($path, '/api/') === 0) {
     exit;
 }
 
+// Одна серверная обработка для обычных форм и AJAX-запросов.
+if ($request_method === 'POST') {
+    if ($path === '/cart/add') {
+        $controller = new \App\Controllers\CartController($pdo);
+        $controller->add(\App\Helpers\Request::localPath($_POST['return_to'] ?? '', '/cart'));
+        exit;
+    }
+    if (preg_match('/^\/cart\/(\d+)\/(update|delete)$/', $path, $matches)) {
+        $_GET['id'] = $matches[1];
+        $controller = new \App\Controllers\CartController($pdo);
+        $cart_redirect = \App\Helpers\Request::localPath($_POST['return_to'] ?? '', '/cart');
+        if ($matches[2] === 'delete') {
+            $controller->remove($cart_redirect);
+        } else {
+            $controller->update($cart_redirect);
+        }
+        exit;
+    }
+    if ($path === '/checkout') {
+        $controller = new \App\Controllers\OrderController($pdo);
+        $controller->create('/checkout');
+        exit;
+    }
+    if (preg_match('~^/product/([a-z0-9-]+(?:/[a-z0-9-]+)+)/reviews$~', $path, $matches)) {
+        $product = (new \App\Models\Product($pdo))->getByPath($matches[1]);
+        if (!$product) {
+            http_response_code(404);
+            include BASE_PATH . '/src/views/404.php';
+            exit;
+        }
+        $action = \App\Helpers\Request::text($_POST, 'action');
+        $product_id = (int)$product['id'];
+        $_POST['product_id'] = $product_id;
+        $redirect = \App\Helpers\Url::productPath($product, $pdo) . '?tab=reviews#reviews';
+        $controller = new \App\Controllers\ReviewController($pdo);
+        if ($action === 'add') {
+            $controller->addReview($redirect);
+        } elseif ($action === 'update') {
+            $controller->updateReview($redirect);
+        } elseif ($action === 'delete') {
+            $controller->deleteReview($redirect);
+        } else {
+            \App\Helpers\Response::send(['success' => false, 'message' => 'Неизвестное действие с отзывом'], 400, $redirect);
+        }
+        exit;
+    }
+}
+
 // Веб-маршруты
 if ($path === '/') {
     include BASE_PATH . '/src/views/home.php';
@@ -260,8 +321,8 @@ if ($path === '/') {
 } elseif ($path === '/logout') {
     $controller = new \App\Controllers\AuthController($pdo);
     $controller->logout();
-} elseif (preg_match('/^\/product\/(\d+)$/', $path, $matches)) {
-    $_GET['id'] = $matches[1];
+} elseif (preg_match('~^/product/([a-z0-9-]+(?:/[a-z0-9-]+)+)$~', $path, $matches)) {
+    $_GET['product_path'] = $matches[1];
     include BASE_PATH . '/src/views/product.php';
 } elseif ($path === '/account') {
     if (!\App\Helpers\Auth::isLoggedIn()) {
@@ -270,12 +331,16 @@ if ($path === '/') {
     }
     include BASE_PATH . '/src/views/account.php';
 } elseif ($path === '/admin') {
-    if (!\App\Helpers\Auth::isLoggedIn() || (\App\Helpers\Auth::getCurrentRole() !== 'admin' && \App\Helpers\Auth::getCurrentRole() !== 'manager')) {
+    if (!\App\Helpers\Auth::canManageStore()) {
+        if (\App\Helpers\Request::isAjax()) {
+            \App\Helpers\Response::send(['success' => false, 'message' => 'Необходимо войти как менеджер или администратор'], 403);
+            exit;
+        }
         header('Location: ' . APP_URL . '/');
         exit;
     }
     include BASE_PATH . '/src/views/admin/dashboard.php';
-} elseif (preg_match('/^\/category\/([a-z0-9-]+)$/', $path, $matches)) {
+} elseif (preg_match('~^/category/([a-z0-9-]+(?:/[a-z0-9-]+)*)$~', $path, $matches)) {
     $_GET['slug'] = $matches[1];
     include BASE_PATH . '/src/views/category.php';
 } else {

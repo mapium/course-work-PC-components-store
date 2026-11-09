@@ -1,5 +1,5 @@
 <?php
-require_once dirname(__DIR__) . '/config/Database.php';
+/** @var \PDO $pdo */
 require_once dirname(__DIR__) . '/models/Order.php';
 require_once dirname(__DIR__) . '/helpers/Auth.php';
 
@@ -9,8 +9,6 @@ if (!\App\Helpers\Auth::isLoggedIn()) {
     exit;
 }
 
-$db = new \App\Config\Database();
-$pdo = $db->connect();
 $order_model = new \App\Models\Order($pdo);
 
 $user_id = \App\Helpers\Auth::getCurrentUserId();
@@ -27,18 +25,17 @@ $total_orders = count($orders);
 $total_spent = array_sum(array_column($orders, 'total_amount'));
 
 // Статистика
-$completed_orders = count(array_filter($orders, function($o) { return $o['status'] === 'completed'; }));
-$pending_orders = count(array_filter($orders, function($o) { return $o['status'] === 'pending'; }));
+$completed_orders = count(array_filter($orders, function($o) { return $o['status'] === 'delivered'; }));
+$pending_orders = count(array_filter($orders, function($o) { return in_array($o['status'], ['pending', 'processing', 'assembled', 'shipped'], true); }));
+$current_tab = \App\Helpers\Request::text($_GET, 'tab', 'orders');
+if (!in_array($current_tab, ['orders', 'profile', 'settings'], true)) {
+    $current_tab = 'orders';
+}
 ?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="app-url" content="<?php echo APP_URL; ?>">
-    <meta name="description" content="Личный кабинет - управление заказами и профилем">
-    <title>Личный кабинет - PCComponents Store</title>
-    <link rel="stylesheet" href="<?php echo \App\Helpers\Asset::css('style.css'); ?>">
+    <?php include __DIR__ . '/includes/head.php'; ?>
 </head>
 <body>
     <?php include dirname(__FILE__) . '/includes/header.php'; ?>
@@ -110,24 +107,24 @@ $pending_orders = count(array_filter($orders, function($o) { return $o['status']
 
             <!-- Вкладки -->
             <div class="account-section">
-                <div class="tabs-container">
+                <div class="tabs-container" data-tabs>
                     <div class="tabs-nav">
-                        <button class="tab-btn active" data-tab="orders">
+                        <a href="<?php echo APP_URL; ?>/account?tab=orders" class="tab-btn <?php echo $current_tab === 'orders' ? 'active' : ''; ?>" data-tab="orders">
                             <img src="<?php echo APP_URL; ?>/public/images/icons/list_alt.svg" alt="" width="18" height="18">
                             Мои заказы
-                        </button>
-                        <button class="tab-btn" data-tab="profile">
+                        </a>
+                        <a href="<?php echo APP_URL; ?>/account?tab=profile" class="tab-btn <?php echo $current_tab === 'profile' ? 'active' : ''; ?>" data-tab="profile">
                             <img src="<?php echo APP_URL; ?>/public/images/icons/person.svg" alt="" width="18" height="18">
                             Профиль
-                        </button>
-                        <button class="tab-btn" data-tab="settings">
+                        </a>
+                        <a href="<?php echo APP_URL; ?>/account?tab=settings" class="tab-btn <?php echo $current_tab === 'settings' ? 'active' : ''; ?>" data-tab="settings">
                             <img src="<?php echo APP_URL; ?>/public/images/icons/settings.svg" alt="" width="18" height="18">
                             Настройки
-                        </button>
+                        </a>
                     </div>
 
                     <!-- Заказы -->
-                    <div class="tab-content active" id="orders">
+                    <div class="tab-content <?php echo $current_tab === 'orders' ? 'active' : ''; ?>" id="orders">
                         <div class="section-header">
                             <h2>История заказов</h2>
                         </div>
@@ -150,17 +147,10 @@ $pending_orders = count(array_filter($orders, function($o) { return $o['status']
                                             </div>
                                             <div class="order-status">
                                                 <?php
-                                                $status_map = [
-                                                    'pending' => ['label' => 'В обработке', 'class' => 'badge-warning'],
-                                                    'processing' => ['label' => 'Обрабатывается', 'class' => 'badge-info'],
-                                                    'shipped' => ['label' => 'Отправлен', 'class' => 'badge-secondary'],
-                                                    'completed' => ['label' => 'Выполнен', 'class' => 'badge-success'],
-                                                    'cancelled' => ['label' => 'Отменён', 'class' => 'badge-destructive'],
-                                                ];
-                                                $status = $status_map[$order['status']] ?? ['label' => $order['status'], 'class' => ''];
+                                                $status = \App\Models\Order::statusInfo($order['status']);
                                                 ?>
                                                 <span class="badge <?php echo $status['class']; ?>">
-                                                    <?php echo $status['label']; ?>
+                                                    <?php echo htmlspecialchars($status['label']); ?>
                                                 </span>
                                             </div>
                                         </div>
@@ -196,7 +186,7 @@ $pending_orders = count(array_filter($orders, function($o) { return $o['status']
                     </div>
 
                     <!-- Профиль -->
-                    <div class="tab-content" id="profile">
+                    <div class="tab-content <?php echo $current_tab === 'profile' ? 'active' : ''; ?>" id="profile">
                         <div class="section-header">
                             <h2>Информация профиля</h2>
                         </div>
@@ -218,7 +208,7 @@ $pending_orders = count(array_filter($orders, function($o) { return $o['status']
                     </div>
 
                     <!-- Настройки -->
-                    <div class="tab-content" id="settings">
+                    <div class="tab-content <?php echo $current_tab === 'settings' ? 'active' : ''; ?>" id="settings">
                         <div class="section-header">
                             <h2>Настройки аккаунта</h2>
                         </div>
@@ -254,31 +244,5 @@ $pending_orders = count(array_filter($orders, function($o) { return $o['status']
 
     <?php include dirname(__FILE__) . '/includes/footer.php'; ?>
 
-    <script>
-        // Переключение вкладок
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const tabName = this.getAttribute('data-tab');
-
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-
-                this.classList.add('active');
-                document.getElementById(tabName).classList.add('active');
-            });
-
-            btn.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    this.click();
-                }
-            });
-        });
-
-        // Переключатель темы в настройках
-        document.getElementById('theme-toggle-settings')?.addEventListener('click', function() {
-            document.getElementById('theme-toggle')?.click();
-        });
-    </script>
 </body>
 </html>

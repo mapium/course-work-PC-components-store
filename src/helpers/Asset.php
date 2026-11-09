@@ -16,7 +16,7 @@ class Asset
 
     public static function image($path)
     {
-        return APP_URL . '/public/images/' . $path;
+        return self::versioned('images', $path);
     }
 
     public static function url($path = '')

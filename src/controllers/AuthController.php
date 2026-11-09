@@ -108,7 +108,11 @@ class AuthController {
             return;
         }
 
+        (new \App\Models\Cart($this->db))->mergeGuestCart($user['id'], session_id());
+        session_regenerate_id(true);
         Auth::login($user['id'], $user['role']);
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['email'] = $user['email'];
 
         echo json_encode(['success' => true, 'message' => 'Login successful']);
     }

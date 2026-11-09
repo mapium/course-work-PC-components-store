@@ -1,67 +1,26 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="app-url" content="<?php echo APP_URL; ?>">
-    <meta name="description" content="PCComponents Store - интернет-магазин комплектующих для ПК. Процессоры, видеокарты, материнские платы и другие компоненты по лучшим ценам.">
-    <meta name="keywords" content="комплектующие ПК, купить процессор, видеокарта, материнская плата, SSD, оперативная память">
-    <title>PCComponents Store - Комплектующие для ПК</title>
-    <link rel="stylesheet" href="<?php echo \App\Helpers\Asset::css('style.css'); ?>">
-    <link rel="canonical" href="<?php echo APP_URL; ?>/">
-
-    <!-- OpenGraph теги -->
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="PCComponents Store - Интернет-магазин комплектующих для ПК">
-    <meta property="og:description" content="Лучший выбор комплектующих для ПК по конкурентным ценам. Процессоры, видеокарты, материнские платы, SSD и многое другое.">
-    <meta property="og:url" content="<?php echo APP_URL; ?>/">
-    <meta property="og:site_name" content="PCComponents Store">
-
-    <!-- Микроразметка Organization -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "PCComponents Store",
-      "url": "<?php echo APP_URL; ?>/",
-      "logo": "<?php echo APP_URL; ?>/public/images/logo.png",
-      "description": "Интернет-магазин комплектующих для персональных компьютеров",
-      "address": {
-        "@type": "PostalAddress",
-        "addressCountry": "RU",
-        "addressLocality": "Екатеринбург"
-      },
-      "contactPoint": {
-        "@type": "ContactPoint",
-        "telephone": "+7-343-123-45-67",
-        "contactType": "customer service",
-        "availableLanguage": "Russian"
-      }
-    }
-    </script>
-
-    <!-- Микроразметка WebSite для поиска -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "PCComponents Store",
-      "url": "<?php echo APP_URL; ?>/",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "<?php echo APP_URL; ?>/catalog?search={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
-    }
-    </script>
+    <?php
+    /** @var \PDO $pdo */
+    /** @var \App\Models\Category $category_model */
+    /** @var array $admin_categories */
+    $seo = ['schemas' => [
+        ['@context' => 'https://schema.org', '@type' => 'Organization', 'name' => 'PCComponents Store', 'url' => APP_URL . '/',
+            'logo' => \App\Helpers\Asset::image('pc_logo.svg'),
+            'address' => ['@type' => 'PostalAddress', 'addressCountry' => 'RU', 'addressLocality' => 'Екатеринбург'],
+            'contactPoint' => ['@type' => 'ContactPoint', 'telephone' => '+7-343-123-45-67', 'contactType' => 'customer service', 'availableLanguage' => 'Russian']],
+        ['@context' => 'https://schema.org', '@type' => 'WebSite', 'name' => 'PCComponents Store', 'url' => APP_URL . '/',
+            'potentialAction' => ['@type' => 'SearchAction', 'target' => APP_URL . '/catalog?search={search_term_string}', 'query-input' => 'required name=search_term_string']]
+    ]];
+    include __DIR__ . '/includes/head.php';
+    ?>
 </head>
 <body>
     <?php include dirname(__FILE__) . '/includes/header.php'; 
-    require_once dirname(__DIR__) . '/config/Database.php';
     require_once dirname(__DIR__) . '/models/Product.php';
 
-    $db = new \App\Config\Database();
-    $pdo = $db->connect();
     $product_model = new \App\Models\Product($pdo);
     ?>
 
@@ -168,8 +127,9 @@
                         foreach ($categories as $category):
                         ?>
                             <div class="category-card">
-                                <h3><a href="<?php echo APP_URL; ?>/category/<?php echo htmlspecialchars($category['slug']); ?>"><?php echo htmlspecialchars($category['name']); ?></a></h3>
-                                <p><?php echo htmlspecialchars($category['description']); ?></p>
+                                <?php if ($category['icon_path']): ?><img src="<?php echo htmlspecialchars(\App\Helpers\Media::categoryUrl($category['icon_path'])); ?>" class="category-icon" alt="" width="48" height="48" loading="lazy"><?php endif; ?>
+                                <h3><a href="<?php echo htmlspecialchars(\App\Helpers\Url::category($category, $pdo)); ?>"><?php echo htmlspecialchars($category['name']); ?></a></h3>
+                                <p><?php echo htmlspecialchars(\App\Helpers\Seo::categoryDescription($category)); ?></p>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -182,36 +142,10 @@
                 <div class="products-grid">
                     <?php
                     $featured = $product_model->getFeatured(6);
+                    $card_return_to = '/';
                     foreach ($featured as $product):
                     ?>
-                        <div class="product-card">
-                            <a href="<?php echo APP_URL; ?>/product/<?php echo $product['id']; ?>" class="product-card-link">
-                                <img
-                                    src="<?php echo APP_URL; ?>/public/images/products/<?php echo htmlspecialchars($product['main_image'] ?? 'placeholder.jpg'); ?>"
-                                    alt="<?php echo htmlspecialchars($product['name'] . ' - ' . ($product['brand'] ?? '')); ?>"
-                                    class="product-image"
-                                    loading="lazy"
-                                    width="300"
-                                    height="300"
-                                >
-                                <div class="product-info">
-                                    <h3 class="product-name"><?php echo htmlspecialchars($product['name']); ?></h3>
-                                    <p class="product-price"><?php echo number_format($product['price'], 2, '.', ' '); ?> ₽</p>
-                                    <p class="product-description"><?php echo htmlspecialchars(substr($product['description'], 0, 100)); ?></p>
-                                </div>
-                            </a>
-                            <div class="product-actions">
-                                <form method="POST" action="<?php echo APP_URL; ?>/api/cart/add" class="add-to-cart-form">
-                                    <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
-                                    <input type="hidden" name="quantity" value="1">
-                                    <?php echo \App\Helpers\CSRF::getTokenField(); ?>
-                                    <button type="submit" class="btn btn-sm">
-                                        <img src="<?php echo APP_URL; ?>/public/images/icons/shopping_cart.svg" alt="" width="16" height="16">
-                                        В корзину
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
+                        <?php $card_product = $product; include __DIR__ . '/includes/product-card.php'; ?>
                     <?php endforeach; ?>
                 </div>
             </div>
@@ -220,6 +154,7 @@
 
     <?php include dirname(__FILE__) . '/includes/footer.php'; ?>
 
-    <script src="<?php echo \App\Helpers\Asset::js('main.js'); ?>"></script>
+    <script src="<?php echo \App\Helpers\Asset::js('hero-carousel.js'); ?>" defer></script>
+    <script src="<?php echo \App\Helpers\Asset::js('category-carousel.js'); ?>" defer></script>
 </body>
 </html>

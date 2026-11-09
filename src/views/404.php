@@ -1,10 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Страница не найдена - PCComponents Store</title>
-    <link rel="stylesheet" href="<?php echo \App\Helpers\Asset::css('style.css'); ?>">
+    <?php $seo = ['title' => 'Страница не найдена — PCComponents Store', 'description' => 'Запрашиваемая страница не найдена.', 'noindex' => true]; include __DIR__ . '/includes/head.php'; ?>
 </head>
 <body>
     <?php include dirname(__FILE__) . '/includes/header.php'; ?>
