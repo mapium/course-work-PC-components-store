@@ -10,6 +10,9 @@ if (!$product) {
     exit;
 }
 $product_id = (int)$product['id'];
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
+    \App\Helpers\BrowsingHistory::remember($pdo, $product_id);
+}
 $product_path = \App\Helpers\Url::productPath($product, $pdo);
 $product_url = APP_URL . $product_path;
 $product['description'] = \App\Helpers\Seo::productDescription($product);
@@ -110,6 +113,7 @@ $seo = [
                     <?php $rating_value = $average_rating; $rating_count = $review_count; include __DIR__ . '/includes/rating.php'; ?>
                     <p class="product-price-large"><?php echo number_format($product['price'], 0, '', ' '); ?> ₽</p>
                     <p class="product-stock <?php echo $product['stock'] > 0 ? 'in-stock' : 'out-of-stock'; ?>"><?php echo $product['stock'] > 0 ? '✓ В наличии' : '✗ Нет в наличии'; ?></p>
+                    <p class="product-order-count">Количество заказов: <?php echo number_format((int)$product['orders_count'], 0, '', ' '); ?></p>
                     <div class="product-description"><p><?php echo htmlspecialchars($product['description'] ?? ''); ?></p></div>
                     <?php if ($product['stock'] > 0): ?>
                         <div class="product-actions">
@@ -157,15 +161,15 @@ $seo = [
                     <?php else: ?><p class="login-prompt"><a href="<?php echo APP_URL; ?>/auth">Войдите</a>, чтобы оставить отзыв</p><?php endif; ?>
                 </div>
             </div>
-            <?php if ($similar_products): ?>
-                <section class="similar-products">
-                    <h2>Похожие товары</h2>
-                    <div class="products-grid">
-                        <?php $card_return_to = $product_path; ?>
-                        <?php foreach ($similar_products as $card_product): include __DIR__ . '/includes/product-card.php'; endforeach; ?>
-                    </div>
-                </section>
-            <?php endif; ?>
+            <?php
+            $product_section = [
+                'id' => 'similar-products', 'title' => 'Похожие товары',
+                'description' => 'Альтернативы из той же категории с близкими характеристиками и ценой.',
+                'products' => $similar_products, 'return_to' => $product_path,
+                'empty_message' => 'Пока нет похожих товаров в каталоге. Посмотрите другие комплектующие.'
+            ];
+            include __DIR__ . '/includes/product-section.php';
+            ?>
         </div>
     </main>
     <?php include __DIR__ . '/includes/footer.php'; ?>

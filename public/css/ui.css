@@ -74,12 +74,38 @@ main[aria-busy="true"]::before { content: ''; position: fixed; left: 0; top: 0; 
 .catalog-heading h1 { margin-bottom: 0.75rem; }
 .catalog-heading > p { max-width: 80ch; color: hsl(var(--muted-foreground)); }
 .category-links { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+.subcategory-links { padding-top: 1rem; border-top: 1px solid hsl(var(--border)); }
 .filters-title { font-size: 1.1rem; margin-bottom: 1rem; }
 .catalog-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.catalog-toolbar-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; min-width: 0; }
 .catalog-toolbar label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; }
 .catalog-toolbar select { width: auto; max-width: 240px; }
 .catalog-toolbar .product-count { margin: 0; }
 .catalog-pagination { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.5rem; margin-top: 2rem; }
+.information-page { max-width: 1100px; padding-bottom: 2rem; }
+.information-heading { margin: 2rem 0; }
+.information-heading > p { max-width: 75ch; color: hsl(var(--muted-foreground)); }
+.information-links { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.5rem; }
+.information-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 1.5rem; }
+.information-card { padding: 1.5rem; }
+.information-card h2 { font-size: 1.375rem; }
+.information-card p + p, .information-card ul, .information-card ol { margin-top: 1rem; }
+.information-card ul, .information-card ol { padding-left: 1.25rem; }
+.information-card li + li { margin-top: 0.5rem; }
+.information-card a { overflow-wrap: anywhere; }
+.information-note { padding: 1rem 1.25rem; margin-top: 1.5rem; border-left: 3px solid hsl(var(--primary)); border-radius: var(--radius-sm); background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); font-size: 0.875rem; }
+.information-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
+.product-section { margin: 2.5rem 0; }
+.product-section-heading { margin-bottom: 1.5rem; }
+.product-section-heading h2 { margin-bottom: 0.5rem; }
+.product-section-heading p, .product-order-count { color: hsl(var(--muted-foreground)); font-size: 0.875rem; }
+.product-section-empty { padding: 1.5rem; border: 1px dashed hsl(var(--border)); border-radius: var(--radius-lg); background: hsl(var(--muted) / 0.3); }
+.product-section-empty p { margin-bottom: 1rem; color: hsl(var(--muted-foreground)); }
+.page-top-anchor { position: absolute; top: 0; left: 0; width: 1px; height: 1px; overflow: hidden; outline: none; }
+.back-to-top { position: fixed; right: max(1.25rem, env(safe-area-inset-right)); bottom: max(1.25rem, env(safe-area-inset-bottom)); z-index: 60; display: inline-flex; align-items: center; justify-content: center; width: 3rem; height: 3rem; border: 1px solid hsl(var(--primary)); border-radius: 50%; background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); box-shadow: var(--shadow-md); transition: background-color 150ms ease, box-shadow 150ms ease; }
+.back-to-top:hover { background: hsl(var(--primary-hover)); color: hsl(var(--primary-foreground)); box-shadow: var(--shadow-lg); }
+.back-to-top:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 3px; }
+.back-to-top svg { flex-shrink: 0; }
 .checkbox-group { max-height: 240px; overflow-y: auto; }
 #reset-filters { width: 100%; }
 .product-card-images { display: block; position: relative; flex: 0 0 15rem; height: 15rem; overflow: hidden; background: #fff; }
@@ -145,6 +171,6 @@ main[aria-busy="true"]::before { content: ''; position: fixed; left: 0; top: 0; 
     .nav-links a .cart-count:not([hidden]) { display: inline-flex; }
 }
 @media (prefers-reduced-motion: reduce) {
-    #notifications .notification, .product-image-hover { transition: none; }
+    #notifications .notification, .product-image-hover, .back-to-top { transition: none; }
     main[aria-busy="true"]::before { animation: none; }
 }

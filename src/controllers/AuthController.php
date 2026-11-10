@@ -109,6 +109,7 @@ class AuthController {
         }
 
         (new \App\Models\Cart($this->db))->mergeGuestCart($user['id'], session_id());
+        \App\Helpers\BrowsingHistory::mergeGuest($this->db, $user['id']);
         session_regenerate_id(true);
         Auth::login($user['id'], $user['role']);
         $_SESSION['username'] = $user['username'];

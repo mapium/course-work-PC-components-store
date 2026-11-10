@@ -22,7 +22,9 @@
                 <div class="footer-section">
                     <h4 class="footer-heading">Информация</h4>
                     <ul class="footer-links">
-                        <li><a href="<?php echo APP_URL; ?>/">О магазине</a></li>
+                        <li><a href="<?php echo APP_URL; ?>/about">О магазине</a></li>
+                        <li><a href="<?php echo APP_URL; ?>/delivery">Доставка</a></li>
+                        <li><a href="<?php echo APP_URL; ?>/payment">Способы оплаты</a></li>
                         <li><a href="<?php echo APP_URL; ?>/cart">Корзина</a></li>
                         <?php if (\App\Helpers\Auth::isLoggedIn()): ?>
                             <li><a href="<?php echo APP_URL; ?>/account">Личный кабинет</a></li>
@@ -53,6 +55,12 @@
 
             <div class="footer-bottom">
                 <p>&copy; 2026 PCComponents Store. Все права защищены.</p>
+                <p>Этот сайт является учебным образцом для демонстрации.</p>
             </div>
         </div>
     </footer>
+    <a href="#page-top" class="back-to-top" data-back-to-top aria-label="Вернуться наверх" title="Вернуться наверх">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path d="M12 19V5m-7 7 7-7 7 7" />
+        </svg>
+    </a>

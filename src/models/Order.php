@@ -78,11 +78,44 @@ class Order {
         if (!isset(self::STATUSES[$status])) {
             throw new \InvalidArgumentException('Недопустимый статус заказа');
         }
-        $query = "UPDATE " . $this->table . " SET status = :status, updated_at = NOW() WHERE id = :id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
-        $stmt->bindParam(':status', $status);
-        return $stmt->execute();
+        $own_transaction = !$this->conn->inTransaction();
+        if ($own_transaction) $this->conn->beginTransaction();
+        try {
+            // Блокировка не даёт двум запросам повторно учесть отмену или восстановление заказа.
+            $lock = $this->conn->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : '';
+            $stmt = $this->conn->prepare('SELECT status FROM orders WHERE id = ?' . $lock);
+            $stmt->execute([(int)$id]);
+            $previous = $stmt->fetchColumn();
+            if ($previous === false) {
+                if ($own_transaction) $this->conn->commit();
+                return false;
+            }
+            if ($previous !== $status) {
+                $stmt = $this->conn->prepare('UPDATE orders SET status = ?, updated_at = NOW() WHERE id = ?');
+                $stmt->execute([$status, (int)$id]);
+                if (($previous === 'cancelled') !== ($status === 'cancelled')) {
+                    $this->changeProductOrderCounts($id, $status === 'cancelled' ? -1 : 1);
+                }
+            }
+            if ($own_transaction) $this->conn->commit();
+            return true;
+        } catch (\Throwable $error) {
+            if ($own_transaction && $this->conn->inTransaction()) $this->conn->rollBack();
+            throw $error;
+        }
+    }
+
+    public function recordProductOrders($order_id) {
+        if (!$this->conn->inTransaction()) throw new \LogicException('Счётчик учитывается в транзакции создания заказа');
+        $this->changeProductOrderCounts($order_id, 1);
+    }
+
+    private function changeProductOrderCounts($order_id, $direction) {
+        $expression = $direction > 0 ? 'orders_count + 1' : 'CASE WHEN orders_count > 0 THEN orders_count - 1 ELSE 0 END';
+        // IN обновляет товар один раз, даже если в заказе несколько его позиций или несколько штук.
+        $stmt = $this->conn->prepare('UPDATE products SET orders_count = ' . $expression . ', updated_at = updated_at
+            WHERE id IN (SELECT product_id FROM order_items WHERE order_id = ?)');
+        $stmt->execute([(int)$order_id]);
     }
 
     public function getItems($order_id) {

@@ -36,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $old_session_id = session_id();
                 // Гостевые позиции переходят в аккаунт и объединяются с сохранённой корзиной.
                 (new \App\Models\Cart($pdo))->mergeGuestCart($user['id'], $old_session_id);
+                \App\Helpers\BrowsingHistory::mergeGuest($pdo, $user['id']);
                 session_regenerate_id(true);
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
@@ -133,10 +134,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php echo \App\Helpers\CSRF::getTokenField(); ?>
 
                     <label for="login_email">Email</label>
-                    <input type="email" id="login_email" name="email" autocomplete="email" maxlength="100" value="<?php echo htmlspecialchars($auth_values['email'] ?? ''); ?>" required>
+                    <input type="email" id="login_email" name="email" autocomplete="email" maxlength="100" placeholder="example@mail.ru" value="<?php echo htmlspecialchars($auth_values['email'] ?? ''); ?>" required>
 
                     <label for="login_password">Пароль</label>
-                    <input type="password" id="login_password" name="password" autocomplete="current-password" required>
+                    <input type="password" id="login_password" name="password" autocomplete="current-password" placeholder="Введите пароль" required>
 
                     <button type="submit" class="btn">Войти</button>
                 </form>
@@ -147,22 +148,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php echo \App\Helpers\CSRF::getTokenField(); ?>
 
                     <label for="register_email">Email</label>
-                    <input type="email" id="register_email" name="email" autocomplete="email" maxlength="100" value="<?php echo htmlspecialchars($auth_values['email'] ?? ''); ?>" required>
+                    <input type="email" id="register_email" name="email" autocomplete="email" maxlength="100" placeholder="example@mail.ru" value="<?php echo htmlspecialchars($auth_values['email'] ?? ''); ?>" required>
 
                     <label for="register_username">Имя пользователя</label>
-                    <input type="text" id="register_username" name="username" autocomplete="username" maxlength="50" value="<?php echo htmlspecialchars($auth_values['username'] ?? ''); ?>" required>
+                    <input type="text" id="register_username" name="username" autocomplete="username" maxlength="50" placeholder="Придумайте имя пользователя" value="<?php echo htmlspecialchars($auth_values['username'] ?? ''); ?>" required>
 
                     <label for="register_full_name">Полное имя</label>
-                    <input type="text" id="register_full_name" name="full_name" autocomplete="name" maxlength="100" value="<?php echo htmlspecialchars($auth_values['full_name'] ?? ''); ?>">
+                    <input type="text" id="register_full_name" name="full_name" autocomplete="name" maxlength="100" placeholder="Иван Иванов" value="<?php echo htmlspecialchars($auth_values['full_name'] ?? ''); ?>">
 
                     <label for="register_phone">Телефон</label>
-                    <input type="tel" id="register_phone" name="phone" autocomplete="tel" maxlength="20" value="<?php echo htmlspecialchars($auth_values['phone'] ?? ''); ?>">
+                    <input type="tel" id="register_phone" name="phone" autocomplete="tel" maxlength="20" placeholder="+7 (999) 123-45-67" value="<?php echo htmlspecialchars($auth_values['phone'] ?? ''); ?>">
 
                     <label for="register_password">Пароль</label>
-                    <input type="password" id="register_password" name="password" autocomplete="new-password" required>
+                    <input type="password" id="register_password" name="password" autocomplete="new-password" placeholder="Не менее 6 символов" minlength="6" required>
 
                     <label for="register_password_confirm">Подтвердить пароль</label>
-                    <input type="password" id="register_password_confirm" name="password_confirm" autocomplete="new-password" required>
+                    <input type="password" id="register_password_confirm" name="password_confirm" autocomplete="new-password" placeholder="Повторите пароль" minlength="6" required>
 
                     <button type="submit" class="btn">Зарегистрироваться</button>
                 </form>

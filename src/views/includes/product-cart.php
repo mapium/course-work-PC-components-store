@@ -5,6 +5,8 @@ if (!isset($product_cart_items)) {
     $product_cart_items = array_column((new \App\Models\Cart($pdo))->getItems(\App\Helpers\Auth::getCurrentUserId(), session_id()), null, 'product_id');
 }
 $product_cart_product_id = (int)$cart_product['id'];
+$product_cart_instance = ($product_cart_instance ?? 0) + 1;
+$product_cart_input_id = 'product-cart-quantity-' . $product_cart_product_id . '-' . $product_cart_instance;
 $product_cart_item = $product_cart_items[$product_cart_product_id] ?? null;
 $product_cart_id = (int)($product_cart_item['id'] ?? 0);
 $product_cart_quantity = (int)($product_cart_item['quantity'] ?? 0);
@@ -35,7 +37,7 @@ $product_cart_return_to = htmlspecialchars($cart_return_to, ENT_QUOTES, 'UTF-8')
         <?php echo \App\Helpers\CSRF::getTokenField(); ?>
         <!-- Первый submit обновляет количество при нажатии Enter, а не уменьшает его. -->
         <button type="submit" class="btn btn-sm product-cart-apply" data-cart-apply>Обновить количество</button>
-        <input id="product-cart-quantity-<?php echo $product_cart_product_id; ?>" type="number" name="quantity" value="<?php echo max(1, $product_cart_quantity); ?>" min="1" max="<?php echo max(1, $product_cart_stock); ?>" step="1" required class="quantity-display" aria-label="Количество товара в корзине">
+        <input id="<?php echo $product_cart_input_id; ?>" type="number" name="quantity" value="<?php echo max(1, $product_cart_quantity); ?>" min="1" max="<?php echo max(1, $product_cart_stock); ?>" step="1" required class="quantity-display" aria-label="Количество товара в корзине">
         <button type="submit" class="btn btn-icon btn-ghost" name="quantity" value="<?php echo max(0, $product_cart_quantity - 1); ?>" formaction="<?php echo APP_URL . '/cart/' . $product_cart_id . ($product_cart_quantity <= 1 ? '/delete' : '/update'); ?>" data-cart-decrease aria-label="Уменьшить количество" title="<?php echo $product_cart_quantity <= 1 ? 'Убрать из корзины' : 'Уменьшить количество'; ?>">
             <img src="<?php echo APP_URL; ?>/public/images/icons/remove.svg" alt="" width="16" height="16">
         </button>

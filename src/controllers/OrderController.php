@@ -103,6 +103,7 @@ class OrderController {
                 $item_total = (int)round($item['price'] * 100) * (int)$item['quantity'] / 100;
                 $stmt->execute([$order_id, $item['product_id'], $item['quantity'], $item['price'], $item_total]);
             }
+            $this->order_model->recordProductOrders($order_id);
             $cart_model->clear(Auth::getCurrentUserId(), session_id());
             $this->db->commit();
             unset($_SESSION['checkout_old']);

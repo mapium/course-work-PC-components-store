@@ -1,3 +1,4 @@
+    <div id="page-top" class="page-top-anchor" tabindex="-1"></div>
     <!-- Контактная информация -->
     <div class="topbar">
         <div class="container">
@@ -26,7 +27,7 @@
                 <div class="navbar-content">
                     <a href="<?php echo APP_URL; ?>/" class="logo" aria-label="PCComponents Store — главная страница">
                         <img src="<?php echo \App\Helpers\Asset::image('pc_logo.svg'); ?>" class="logo-image" alt="" width="46" height="48">
-                        <span class="logo-title">PCComponents Store</span>
+                        <span class="logo-title">PC Components Store</span>
                     </a>
 
                     <!-- Поиск -->

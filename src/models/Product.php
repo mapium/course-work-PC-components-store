@@ -78,6 +78,58 @@ class Product {
         return $this->getWithFilters(['featured' => true], $limit);
     }
 
+    public function getByIds(array $ids) {
+        $ids = array_values(array_unique(array_filter(array_map(function ($id) {
+            return filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: 0;
+        }, $ids))));
+        $ids = array_slice($ids, 0, 100);
+        if (!$ids) return [];
+        $visible = (new Category($this->conn))->descendantIds();
+        $stmt = $this->conn->prepare('SELECT p.*, ' . $this->imageColumn() . ', ' . $this->ratingColumns() . '
+            FROM products p WHERE p.id IN (' . implode(',', $ids) . ') AND p.is_active = TRUE
+            AND p.category_id IN (' . implode(',', $visible ?: [0]) . ')');
+        $stmt->execute();
+        $rows = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), null, 'id');
+        $products = [];
+        foreach ($ids as $id) if (isset($rows[$id])) $products[] = $rows[$id];
+        return $products;
+    }
+
+    public function getRecommended($limit = 6, array $recent_ids = []) {
+        $recent = $this->getByIds(array_slice($recent_ids, 0, ProductView::MAX_ITEMS));
+        $tree = (new Category($this->conn))->getTree();
+        $categories = array_column($tree, null, 'id');
+        $weights = [];
+        foreach ($recent as $index => $viewed) {
+            $category = $categories[$viewed['category_id']] ?? null;
+            if (!$category) continue;
+            $root = explode('/', $category['path'])[0];
+            $weight = count($recent) - $index;
+            foreach ($tree as $candidate) {
+                if (explode('/', $candidate['path'])[0] !== $root) continue;
+                $id = (int)$candidate['id'];
+                $weights[$id] = ($weights[$id] ?? 0) + $weight * ($id === (int)$viewed['category_id'] ? 4 : 1);
+            }
+        }
+
+        $order = ['(p.stock > 0) DESC'];
+        // Просмотренные товары — запасной вариант для маленького каталога, сначала предлагаем альтернативы.
+        if ($recent) $order[] = 'p.id NOT IN (' . implode(',', array_map('intval', array_column($recent, 'id'))) . ') DESC';
+        if ($weights) {
+            $score = 'CASE p.category_id';
+            foreach ($weights as $id => $weight) $score .= ' WHEN ' . $id . ' THEN ' . $weight;
+            $order[] = $score . ' ELSE 0 END DESC';
+        }
+        $order[] = 'p.is_featured DESC, p.orders_count DESC, average_rating DESC, p.created_at DESC, p.id DESC';
+        $stmt = $this->conn->prepare('SELECT p.*, ' . $this->imageColumn() . ', ' . $this->ratingColumns() . '
+            FROM products p WHERE p.is_active = TRUE
+            AND p.category_id IN (' . implode(',', array_map('intval', array_column($tree, 'id')) ?: [0]) . ')
+            ORDER BY ' . implode(', ', $order) . ' LIMIT :limit');
+        $stmt->bindValue(':limit', max(1, min(24, (int)$limit)), PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function create($data) {
         $query = "INSERT INTO " . $this->table . "
                  (name, slug, category_id, price, description, brand, stock, sku)
@@ -126,17 +178,44 @@ class Product {
     }
 
     public function getSimilarProducts($product_id, $category_id, $limit = 4) {
+        $product = $this->getById($product_id);
+        if (!$product || (int)$product['category_id'] !== (int)$category_id) return [];
+        $ids = (new Category($this->conn))->descendantIds($category_id);
+        $type = null;
+        foreach ($this->getSpecifications($product_id) as $spec) {
+            if (in_array($spec['spec_name'], ['Тип охлаждения', 'Тип', 'Тип накопителя'], true) && trim($spec['spec_value']) !== '') {
+                $type = $spec;
+                break;
+            }
+        }
         $query = "SELECT p.*, " . $this->imageColumn() . ", " . $this->ratingColumns() . "
+                    , (SELECT COUNT(DISTINCT matched.spec_name) + 3 * COUNT(DISTINCT CASE
+                        WHEN matched.spec_name IN ('Сокет', 'Сокеты', 'Тип памяти', 'Форм-фактор', 'Интерфейс', 'Радиатор', 'Диаметр трубок')
+                        THEN matched.spec_name END)
+                       FROM product_specifications matched WHERE matched.product_id = p.id
+                       AND EXISTS (SELECT 1 FROM product_specifications reference_spec
+                           WHERE reference_spec.product_id = :reference_id
+                           AND reference_spec.spec_name = matched.spec_name
+                           AND reference_spec.spec_value = matched.spec_value)) AS similarity_score
                   FROM " . $this->table . " p
-                  WHERE p.category_id = :category_id
+                  WHERE p.category_id IN (" . implode(',', $ids ?: [0]) . ")
                   AND p.id != :product_id
-                  AND p.is_active = TRUE
-                  ORDER BY RAND()
-                  LIMIT :limit";
+                  AND p.is_active = TRUE";
+        if ($type) $query .= ' AND EXISTS (SELECT 1 FROM product_specifications type_spec
+            WHERE type_spec.product_id = p.id AND type_spec.spec_name = :type_name AND type_spec.spec_value = :type_value)';
+        $query .= ' ORDER BY (p.category_id = :category_id) DESC, (p.stock > 0) DESC, similarity_score DESC,
+            ABS(p.price - :reference_price) ASC, (p.brand = :reference_brand) DESC, p.orders_count DESC, p.id DESC LIMIT :limit';
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':category_id', $category_id, PDO::PARAM_INT);
         $stmt->bindParam(':product_id', $product_id, PDO::PARAM_INT);
-        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':reference_id', (int)$product_id, PDO::PARAM_INT);
+        $stmt->bindValue(':reference_price', $product['price']);
+        $stmt->bindValue(':reference_brand', $product['brand'] ?? '');
+        if ($type) {
+            $stmt->bindValue(':type_name', $type['spec_name']);
+            $stmt->bindValue(':type_value', $type['spec_value']);
+        }
+        $stmt->bindValue(':limit', max(1, min(24, (int)$limit)), PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -278,7 +357,8 @@ class Product {
                        (p.name LIKE :search_prefix ESCAPE '!') DESC, p.created_at DESC, p.id DESC";
         } elseif (!$count_only) {
             $sorts = ['price_asc' => 'p.price ASC, p.id DESC', 'price_desc' => 'p.price DESC, p.id DESC',
-                'rating' => 'average_rating DESC, review_count DESC, p.id DESC'];
+                'rating' => 'average_rating DESC, review_count DESC, p.id DESC',
+                'popularity' => 'p.orders_count DESC, p.id DESC'];
             $query .= ' ORDER BY ' . ($sorts[$sort] ?? 'p.created_at DESC, p.id DESC');
         }
         if (!$count_only) $query .= " LIMIT :limit OFFSET :offset";

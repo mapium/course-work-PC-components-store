@@ -1,0 +1,365 @@
+{
+  "description": "Дополнительные демонстрационные товары. Цены, остатки и количество заказов условные; фотографии принадлежат указанным производителям и авторам обзоров.",
+  "categories": [
+    { "slug": "processors", "name": "Процессоры", "description": "Процессоры Intel и AMD для компьютеров", "sort_order": 0 },
+    { "slug": "graphics-cards", "name": "Видеокарты", "description": "Видеокарты NVIDIA и AMD для игр и работы", "sort_order": 0 },
+    { "slug": "motherboards", "name": "Материнские платы", "description": "Материнские платы для Intel и AMD", "sort_order": 0 },
+    { "slug": "ram", "name": "Оперативная память", "description": "Оперативная память DDR4 и DDR5", "sort_order": 0 },
+    { "slug": "storage", "name": "Накопители", "description": "SSD и HDD накопители для компьютера", "sort_order": 0 },
+    { "slug": "cooling", "name": "Охлаждение", "description": "Воздушные кулеры, готовые СЖО и компоненты кастомных водяных контуров", "sort_order": 10 },
+    { "slug": "air-cooling", "name": "Воздушные кулеры", "description": "Башенные кулеры для охлаждения процессоров", "parent_slug": "cooling", "sort_order": 0 },
+    { "slug": "liquid-cooling", "name": "Готовые СЖО", "description": "Замкнутые системы жидкостного охлаждения процессора", "parent_slug": "cooling", "sort_order": 1 },
+    { "slug": "custom-water-cooling", "name": "Кастомное водяное охлаждение", "description": "Наборы для сборки открытого водяного контура и отдельные водоблоки", "parent_slug": "cooling", "sort_order": 2 },
+    { "slug": "power-supplies", "name": "Блоки питания", "description": "Блоки питания для домашних и игровых компьютеров", "sort_order": 11 },
+    { "slug": "cases", "name": "Корпуса", "description": "Корпуса с продуманной вентиляцией и местом для комплектующих", "sort_order": 12 }
+  ],
+  "products": [
+    {
+      "name": "AMD Ryzen 5 7600",
+      "slug": "amd-ryzen-5-7600",
+      "sku": "100-100001015BOX",
+      "category": "processors",
+      "brand": "AMD",
+      "description": "Процессор Zen 4 с 6 ядрами и 12 потоками для платформы AM5. Частота до 5,1 ГГц, поддержка DDR5 и кулер Wraith Stealth в комплекте.",
+      "detailed_description": "Ryzen 5 7600 подходит для игрового и домашнего компьютера на платформе AM5. Шесть ядер Zen 4 и двенадцать потоков обеспечивают многозадачность, а встроенная графика помогает запустить систему без дискретной видеокарты. Для установки нужна совместимая материнская плата AM5 и память DDR5. В коробочной версии предусмотрен кулер Wraith Stealth.",
+      "price": 18990,
+      "old_price": 20990,
+      "stock": 20,
+      "orders_count": 489,
+      "is_featured": 1,
+      "specifications": { "Сокет": "AM5", "Количество ядер": "6", "Количество потоков": "12", "Базовая частота": "3,8 ГГц", "Максимальная частота": "5,1 ГГц", "Кэш L3": "32 МБ", "Тип памяти": "DDR5", "TDP": "65 Вт", "Комплектация": "BOX, Wraith Stealth" },
+      "source_page": "https://www.techpowerup.com/review/amd-ryzen-5-7600-non-x/4.html",
+      "images": [
+        { "file": "amd-ryzen-5-7600.webp", "alt_text": "Процессор AMD Ryzen 5 7600, вид со стороны теплораспределителя", "source_url": "https://www.techpowerup.com/review/amd-ryzen-5-7600-non-x/images/cpu-front.jpg" },
+        { "file": "amd-ryzen-5-7600-box.webp", "alt_text": "Коробка процессора AMD Ryzen 5 7600", "source_url": "https://www.techpowerup.com/review/amd-ryzen-5-7600-non-x/images/package-front.jpg" }
+      ]
+    },
+    {
+      "name": "AMD Ryzen 7 7800X3D",
+      "slug": "amd-ryzen-7-7800x3d",
+      "sku": "100-100000910WOF",
+      "category": "processors",
+      "brand": "AMD",
+      "description": "Игровой процессор AM5 с 8 ядрами, 16 потоками и 96 МБ кэша L3 благодаря технологии 3D V-Cache. Кулер приобретается отдельно.",
+      "detailed_description": "Ryzen 7 7800X3D объединяет архитектуру Zen 4 и дополнительный слой кэша 3D V-Cache. Процессор рассчитан на платформу AM5 с памятью DDR5 и подходит для мощной игровой сборки. В комплект не входит система охлаждения: перед установкой подберите совместимый кулер и проверьте поддержку процессора в BIOS материнской платы.",
+      "price": 39990,
+      "stock": 12,
+      "orders_count": 352,
+      "is_featured": 1,
+      "specifications": { "Сокет": "AM5", "Количество ядер": "8", "Количество потоков": "16", "Базовая частота": "4,2 ГГц", "Максимальная частота": "5,0 ГГц", "Кэш L3": "96 МБ", "Тип памяти": "DDR5", "TDP": "120 Вт", "Комплектация": "BOX, без кулера" },
+      "source_page": "https://www.techpowerup.com/review/amd-ryzen-7-7800x3d/4.html",
+      "images": [
+        { "file": "amd-ryzen-7-7800x3d.webp", "alt_text": "Процессор AMD Ryzen 7 7800X3D, вид сверху", "source_url": "https://www.techpowerup.com/review/amd-ryzen-7-7800x3d/images/cpu-front.jpg" },
+        { "file": "amd-ryzen-7-7800x3d-box.webp", "alt_text": "Коробка процессора AMD Ryzen 7 7800X3D", "source_url": "https://www.techpowerup.com/review/amd-ryzen-7-7800x3d/images/package-front.jpg" }
+      ]
+    },
+    {
+      "name": "Intel Core i7-14700K",
+      "slug": "intel-core-i7-14700k",
+      "sku": "BX8071514700K",
+      "category": "processors",
+      "brand": "Intel",
+      "description": "Процессор LGA1700 с 20 ядрами (8P + 12E), 28 потоками и частотой до 5,6 ГГц. Поддерживает DDR4 или DDR5 в зависимости от материнской платы.",
+      "detailed_description": "Core i7-14700K использует гибридную конфигурацию из восьми производительных и двенадцати энергоэффективных ядер. Разблокированный множитель подходит для совместимой платы с чипсетом Z-серии. Процессор имеет встроенную графику UHD Graphics 770. Требуется отдельная эффективная система охлаждения; для платы LGA1700 проверьте поддержку 14-го поколения и установите актуальный BIOS.",
+      "price": 36990,
+      "stock": 14,
+      "orders_count": 397,
+      "specifications": { "Сокет": "LGA1700", "Количество ядер": "20 (8P + 12E)", "Количество потоков": "28", "Базовая частота P-ядер": "3,4 ГГц", "Максимальная частота": "5,6 ГГц", "Кэш L3": "33 МБ", "Тип памяти": "DDR4 / DDR5", "Базовая мощность": "125 Вт", "Максимальная турбомощность": "253 Вт", "Встроенная графика": "Intel UHD Graphics 770" },
+      "source_page": "https://www.techpowerup.com/review/intel-core-i7-14700k/3.html",
+      "images": [
+        { "file": "intel-core-i7-14700k.webp", "alt_text": "Процессор Intel Core i7-14700K, вид сверху", "source_url": "https://www.techpowerup.com/review/intel-core-i7-14700k/images/cpu-front.jpg" },
+        { "file": "intel-core-i7-14700k-box.webp", "alt_text": "Коробка процессора Intel Core i7-14700K", "source_url": "https://www.techpowerup.com/review/intel-core-i7-14700k/images/package-front.jpg" }
+      ]
+    },
+    {
+      "name": "ASUS Dual GeForce RTX 4060 OC 8GB",
+      "slug": "asus-dual-geforce-rtx-4060-oc-8gb",
+      "sku": "DUAL-RTX4060-O8G",
+      "category": "graphics-cards",
+      "brand": "ASUS",
+      "description": "Видеокарта GeForce RTX 4060 с 8 ГБ памяти GDDR6, двухвентиляторным охлаждением и поддержкой DLSS 3 для игр в Full HD.",
+      "detailed_description": "ASUS Dual RTX 4060 OC — компактная видеокарта на архитектуре NVIDIA Ada Lovelace. Два вентилятора охлаждают графический процессор, а технологии трассировки лучей и DLSS поддерживаются в совместимых играх. Перед покупкой проверьте свободное место в корпусе, наличие 8-контактного кабеля PCIe и достаточную мощность блока питания.",
+      "price": 32990,
+      "stock": 18,
+      "orders_count": 474,
+      "specifications": { "Графический процессор": "GeForce RTX 4060", "Видеопамять": "8 ГБ", "Тип памяти": "GDDR6", "Шина памяти": "128 бит", "CUDA-ядра": "3072", "Интерфейс": "PCI Express 4.0 x8", "Вентиляторы": "2", "Дополнительное питание": "1 × 8-pin", "Видеовыходы": "3 × DisplayPort 1.4a, 1 × HDMI 2.1a" },
+      "source_page": "https://www.techpowerup.com/review/asus-geforce-rtx-4060-dual-oc/3.html",
+      "images": [
+        { "file": "asus-dual-rtx-4060-oc-8gb.webp", "alt_text": "Видеокарта ASUS Dual GeForce RTX 4060 OC 8GB, сторона вентиляторов", "source_url": "https://www.techpowerup.com/review/asus-geforce-rtx-4060-dual-oc/images/card1.jpg" },
+        { "file": "asus-dual-rtx-4060-oc-8gb-back.webp", "alt_text": "Видеокарта ASUS Dual RTX 4060 OC, обратная сторона", "source_url": "https://www.techpowerup.com/review/asus-geforce-rtx-4060-dual-oc/images/card2.jpg" }
+      ]
+    },
+    {
+      "name": "ASUS TUF Gaming GeForce RTX 4070 SUPER OC 12GB",
+      "slug": "asus-tuf-geforce-rtx-4070-super-oc-12gb",
+      "sku": "TUF-RTX4070S-O12G-GAMING",
+      "category": "graphics-cards",
+      "brand": "ASUS",
+      "description": "GeForce RTX 4070 SUPER с 12 ГБ GDDR6X, тремя вентиляторами и металлической конструкцией TUF Gaming для игровой сборки высокого класса.",
+      "detailed_description": "TUF Gaming RTX 4070 SUPER OC оснащена тремя вентиляторами и усиленной конструкцией. Архитектура Ada Lovelace поддерживает DLSS 3 и аппаратную трассировку лучей. Карта рассчитана на производительную игровую систему; перед установкой проверьте длину и толщину корпуса видеокарты, питание 16-pin и рекомендации к мощности блока питания.",
+      "price": 79990,
+      "stock": 8,
+      "orders_count": 270,
+      "is_featured": 1,
+      "specifications": { "Графический процессор": "GeForce RTX 4070 SUPER", "Видеопамять": "12 ГБ", "Тип памяти": "GDDR6X", "Шина памяти": "192 бита", "CUDA-ядра": "7168", "Интерфейс": "PCI Express 4.0 x16", "Вентиляторы": "3", "Дополнительное питание": "1 × 16-pin", "Видеовыходы": "3 × DisplayPort 1.4a, 1 × HDMI 2.1a" },
+      "source_page": "https://www.techpowerup.com/review/asus-geforce-rtx-4070-super-tuf-oc/3.html",
+      "images": [
+        { "file": "asus-tuf-rtx-4070-super-oc-12gb.webp", "alt_text": "Видеокарта ASUS TUF Gaming GeForce RTX 4070 SUPER OC, сторона вентиляторов", "source_url": "https://www.techpowerup.com/review/asus-geforce-rtx-4070-super-tuf-oc/images/card1.jpg" },
+        { "file": "asus-tuf-rtx-4070-super-oc-12gb-back.webp", "alt_text": "Видеокарта ASUS TUF Gaming RTX 4070 SUPER OC, обратная сторона", "source_url": "https://www.techpowerup.com/review/asus-geforce-rtx-4070-super-tuf-oc/images/card2.jpg" }
+      ]
+    },
+    {
+      "name": "ASUS TUF Gaming B650-PLUS WIFI",
+      "slug": "asus-tuf-gaming-b650-plus-wifi",
+      "sku": "TUF-GAMING-B650-PLUS-WIFI",
+      "category": "motherboards",
+      "brand": "ASUS",
+      "description": "Материнская плата ATX на чипсете AMD B650 для сокета AM5. Четыре слота DDR5, три M.2, сеть 2,5 Гбит/с и Wi-Fi 6.",
+      "detailed_description": "TUF Gaming B650-PLUS WIFI служит основой игровой системы с процессором AMD Ryzen для AM5. Плата поддерживает память DDR5, имеет три разъёма M.2 и радиаторы для накопителей. Проводная сеть 2,5 Гбит/с и Wi-Fi 6 помогают подключить компьютер к сети. Для установки новых поколений Ryzen может потребоваться обновление BIOS.",
+      "price": 22990,
+      "stock": 11,
+      "orders_count": 160,
+      "specifications": { "Сокет": "AM5", "Чипсет": "AMD B650", "Форм-фактор": "ATX", "Тип памяти": "DDR5", "Слоты памяти": "4", "Разъёмы M.2": "3", "Порты SATA": "4", "Сеть": "2,5 Гбит/с", "Беспроводная сеть": "Wi-Fi 6", "Bluetooth": "5.2" },
+      "source_page": "https://www.asus.com/ru/motherboards-components/motherboards/tuf-gaming/tuf-gaming-b650-plus-wifi/",
+      "images": [
+        { "file": "asus-tuf-b650-plus-wifi.webp", "alt_text": "Материнская плата ASUS TUF Gaming B650-PLUS WIFI", "source_url": "https://dlcdnwebimgs.asus.com/gain/d52e1dd0-6b0b-4c62-a625-01c5e41a8b07/" },
+        { "file": "asus-tuf-b650-plus-wifi-angle.webp", "alt_text": "ASUS TUF Gaming B650-PLUS WIFI, дополнительный ракурс", "source_url": "https://dlcdnwebimgs.asus.com/gain/7b4e4e2c-4978-47f9-b29f-00327d14a63d/" }
+      ]
+    },
+    {
+      "name": "ASUS TUF Gaming B760-PLUS WIFI",
+      "slug": "asus-tuf-gaming-b760-plus-wifi",
+      "sku": "TUF-GAMING-B760-PLUS-WIFI",
+      "category": "motherboards",
+      "brand": "ASUS",
+      "description": "Материнская плата ATX с сокетом LGA1700 и чипсетом Intel B760. Память DDR5, три слота M.2, Wi-Fi 6 и Ethernet 2,5 Гбит/с.",
+      "detailed_description": "TUF Gaming B760-PLUS WIFI подходит для совместимых процессоров Intel Core с сокетом LGA1700. Это версия с DDR5, а не модификация D4. Разъёмы M.2 позволяют установить быстрые NVMe-накопители, а встроенные Wi-Fi и Ethernet обеспечивают выбор способа подключения. Перед установкой процессора 14-го поколения проверьте версию BIOS.",
+      "price": 20990,
+      "stock": 13,
+      "orders_count": 361,
+      "specifications": { "Сокет": "LGA1700", "Чипсет": "Intel B760", "Форм-фактор": "ATX", "Тип памяти": "DDR5", "Слоты памяти": "4", "Разъёмы M.2": "3", "Порты SATA": "4", "Сеть": "2,5 Гбит/с", "Беспроводная сеть": "Wi-Fi 6", "Bluetooth": "5.2" },
+      "source_page": "https://www.asus.com/ru/motherboards-components/motherboards/tuf-gaming/tuf-gaming-b760-plus-wifi/",
+      "images": [
+        { "file": "asus-tuf-b760-plus-wifi.webp", "alt_text": "Материнская плата ASUS TUF Gaming B760-PLUS WIFI", "source_url": "https://dlcdnwebimgs.asus.com/gain/bbe169d6-ee09-43c8-aaac-b01940d35422/" },
+        { "file": "asus-tuf-b760-plus-wifi-angle.webp", "alt_text": "ASUS TUF Gaming B760-PLUS WIFI, дополнительный ракурс", "source_url": "https://dlcdnwebimgs.asus.com/gain/c755e479-d69a-4647-b33c-2b87ba2be874/" }
+      ]
+    },
+    {
+      "name": "G.SKILL Trident Z5 Neo RGB 32GB DDR5-6000 CL36",
+      "slug": "gskill-trident-z5-neo-rgb-32gb-ddr5-6000-cl36",
+      "sku": "F5-6000J3636F16GX2-TZ5NR",
+      "category": "ram",
+      "brand": "G.SKILL",
+      "description": "Комплект из двух модулей DDR5 по 16 ГБ с профилем AMD EXPO, скоростью 6000 MT/s, таймингами CL36 и RGB-подсветкой.",
+      "detailed_description": "Trident Z5 Neo RGB — комплект памяти общей ёмкостью 32 ГБ для совместимых DDR5-систем. Два модуля по 16 ГБ оснащены радиаторами и RGB-подсветкой. Заявленные 6000 MT/s и тайминги 36-36-36-96 доступны при включении профиля разгона на совместимой плате; результат зависит от процессора и BIOS. Перед покупкой проверьте список совместимости платы.",
+      "price": 13990,
+      "stock": 20,
+      "orders_count": 90,
+      "specifications": { "Тип памяти": "DDR5", "Объём": "32 ГБ", "Комплект": "2 × 16 ГБ", "Скорость": "6000 MT/s", "CAS Latency": "CL36", "Тайминги": "36-36-36-96", "Напряжение": "1,35 В", "Профиль разгона": "AMD EXPO", "Подсветка": "RGB", "Форм-фактор": "DIMM" },
+      "source_page": "https://www.gskill.com/product/165/390/1662621819/F5-6000J3636F16GX2-TZ5NR",
+      "images": [
+        { "file": "gskill-trident-z5-neo-rgb-32gb.webp", "alt_text": "Комплект G.SKILL Trident Z5 Neo RGB 32GB DDR5", "source_url": "https://www.gskill.com/_upload/images/166262181910.png" },
+        { "file": "gskill-trident-z5-neo-rgb-32gb-angle.webp", "alt_text": "Модули G.SKILL Trident Z5 Neo RGB, дополнительный ракурс", "source_url": "https://www.gskill.com/_upload/images/166262181911.png" }
+      ]
+    },
+    {
+      "name": "Corsair Vengeance 64GB DDR5-6000 CL30",
+      "slug": "corsair-vengeance-64gb-ddr5-6000-cl30",
+      "sku": "CMK64GX5M2B6000C30",
+      "category": "ram",
+      "brand": "Corsair",
+      "description": "Комплект DDR5 общей ёмкостью 64 ГБ (2 × 32 ГБ), скоростью 6000 MT/s и таймингами CL30. Чёрные радиаторы без подсветки.",
+      "detailed_description": "Corsair Vengeance 64 ГБ подходит для работы с большими проектами, виртуальными машинами и многозадачностью. Низкопрофильные алюминиевые радиаторы облегчают установку рядом с процессорным кулером. Память имеет профиль Intel XMP 3.0; скорость 6000 MT/s требует совместимого контроллера, платы и настройки BIOS. Комплект не подходит для DDR4-слотов.",
+      "price": 23990,
+      "stock": 15,
+      "orders_count": 239,
+      "specifications": { "Тип памяти": "DDR5", "Объём": "64 ГБ", "Комплект": "2 × 32 ГБ", "Скорость": "6000 MT/s", "CAS Latency": "CL30", "Профиль разгона": "Intel XMP 3.0", "Подсветка": "Нет", "Цвет": "Чёрный", "Форм-фактор": "DIMM" },
+      "source_page": "https://www.corsair.com/us/en/p/memory/cmk64gx5m2b6000c30/vengeance-64gb-2x32gb-ddr5-dram-6000mt-s-cl30-memory-kit-black-cmk64gx5m2b6000c30",
+      "images": [
+        { "file": "corsair-vengeance-64gb-ddr5.webp", "alt_text": "Два модуля Corsair Vengeance 64GB DDR5, чёрные радиаторы", "source_url": "https://assets.corsair.com/image/upload/c_pad,q_auto,h_1024,w_1024,f_auto/products/Memory/vengeance-ddr5-blk-config/Gallery/VENGEANCE_DDR5_BLK_01_2up.webp" },
+        { "file": "corsair-vengeance-64gb-ddr5-angle.webp", "alt_text": "Corsair Vengeance DDR5, дополнительный ракурс", "source_url": "https://assets.corsair.com/image/upload/c_pad,q_auto,h_1024,w_1024,f_auto/products/Memory/vengeance-ddr5-blk-config/Gallery/VENGEANCE_DDR5_BLK_02.webp" }
+      ]
+    },
+    {
+      "name": "Corsair RM850x 850W 80 PLUS Gold",
+      "slug": "corsair-rm850x-850w-gold",
+      "sku": "CP-9020200-NA",
+      "category": "power-supplies",
+      "brand": "Corsair",
+      "description": "Полностью модульный блок питания RM850x серии 2021 мощностью 850 Вт, с сертификатом 80 PLUS Gold и 135-мм вентилятором.",
+      "detailed_description": "Corsair RM850x 2021 рассчитан на производительные компьютеры. Полностью модульные кабели помогают аккуратно собрать систему, а режим Zero RPM останавливает вентилятор при небольшой нагрузке. Это модель поколения ATX 2.4: кабель для видеокарты с 16-контактным разъёмом нужно подбирать отдельно с учётом совместимости. Используйте только кабели, предназначенные для этой серии блока питания.",
+      "price": 16990,
+      "stock": 10,
+      "orders_count": 68,
+      "specifications": { "Мощность": "850 Вт", "Сертификация": "80 PLUS Gold", "Стандарт": "ATX 2.4", "Кабели": "Полностью модульные", "Вентилятор": "135 мм", "Режим Zero RPM": "Да", "Размеры": "160 × 150 × 86 мм", "Цвет": "Чёрный" },
+      "source_page": "https://www.corsair.com/us/en/p/psu/cp-9020200-na/rmx-series-rm850x-850-watt-80-plus-gold-fully-modular-atx-psu-cp-9020200-na",
+      "images": [
+        { "file": "corsair-rm850x-850w.webp", "alt_text": "Блок питания Corsair RM850x 850W серии 2021", "source_url": "https://assets.corsair.com/image/upload/c_pad,q_auto,h_1024,w_1024,f_auto/products/Power-Supply-Units/base-rmx-2021-config/Gallery/RM850x_01.webp" },
+        { "file": "corsair-rm850x-850w-angle.webp", "alt_text": "Corsair RM850x, дополнительный ракурс", "source_url": "https://assets.corsair.com/image/upload/c_pad,q_auto,h_1024,w_1024,f_auto/products/Power-Supply-Units/base-rmx-2021-config/Gallery/RM850x_03.webp" }
+      ]
+    },
+    {
+      "name": "Corsair 4000D Airflow Black",
+      "slug": "corsair-4000d-airflow-black",
+      "sku": "CC-9011200-WW",
+      "category": "cases",
+      "brand": "Corsair",
+      "description": "Корпус Mid-Tower с продуваемой передней панелью, закалённым стеклом и двумя вентиляторами 120 мм. Подходит для плат ATX, Micro-ATX и Mini-ITX.",
+      "detailed_description": "4000D Airflow имеет перфорированную переднюю панель и систему укладки кабелей RapidRoute. Боковая панель из закалённого стекла позволяет видеть комплектующие. Спереди можно разместить радиатор до 360 мм; совместимость верхнего радиатора зависит от памяти и других компонентов. Корпус продаётся без блока питания и без комплектующих, изображённых в примерах сборок.",
+      "price": 10990,
+      "stock": 14,
+      "orders_count": 240,
+      "specifications": { "Тип корпуса": "Mid-Tower", "Материнские платы": "ATX / Micro-ATX / Mini-ITX", "Материал боковой панели": "Закалённое стекло", "Вентиляторы в комплекте": "2 × 120 мм", "Максимальная длина видеокарты": "360 мм", "Максимальная высота кулера": "170 мм", "Передний радиатор": "До 360 мм", "Размеры": "453 × 230 × 466 мм", "Цвет": "Чёрный", "Блок питания в комплекте": "Нет" },
+      "source_page": "https://www.corsair.com/us/en/p/pc-cases/cc-9011200-ww/4000d-airflow-tempered-glass-mid-tower-atx-case-black-cc-9011200-ww",
+      "images": [
+        { "file": "corsair-4000d-airflow-black.webp", "alt_text": "Чёрный корпус Corsair 4000D Airflow", "source_url": "https://assets.corsair.com/image/upload/c_pad,q_auto,h_1024,w_1024,f_auto/products/Cases/base-4000d-airflow-config/Gallery/4000D_AF_BLACK_01.webp" },
+        { "file": "corsair-4000d-airflow-black-angle.webp", "alt_text": "Корпус Corsair 4000D Airflow, дополнительный ракурс", "source_url": "https://assets.corsair.com/image/upload/c_pad,q_auto,h_1024,w_1024,f_auto/products/Cases/base-4000d-airflow-config/Gallery/4000D_AF_BLACK_02.webp" }
+      ]
+    },
+    {
+      "name": "DeepCool AK620",
+      "slug": "deepcool-ak620",
+      "sku": "R-AK620-BKNNMT-G",
+      "category": "air-cooling",
+      "brand": "DeepCool",
+      "description": "Двухбашенный процессорный кулер с шестью медными тепловыми трубками и двумя PWM-вентиляторами 120 мм. Высота — 160 мм.",
+      "detailed_description": "DeepCool AK620 использует две секции радиатора и шесть тепловых трубок для отвода тепла от процессора. Два вентилятора FK120 регулируются по PWM. Перед установкой убедитесь, что корпус допускает кулер высотой 160 мм, а память помещается под передним вентилятором. Проверьте наличие крепления для вашего сокета в выбранной комплектации.",
+      "price": 6490,
+      "stock": 24,
+      "orders_count": 246,
+      "specifications": { "Тип охлаждения": "Воздушное, двухбашенное", "Сокеты": "LGA1700 / LGA1200 / LGA115x / AM5 / AM4", "Тепловые трубки": "6", "Вентиляторы": "2 × 120 мм", "Скорость вентиляторов": "500–1850 об/мин", "Управление": "PWM, 4-pin", "Высота": "160 мм", "Размеры": "129 × 138 × 160 мм", "Подсветка": "Нет" },
+      "source_page": "https://www.deepcool.com/products/Cooling/cpuaircoolers/AK620-High-Performance-CPU-Cooler/2021/13067.shtml",
+      "images": [
+        { "file": "deepcool-ak620.webp", "alt_text": "Двухбашенный процессорный кулер DeepCool AK620", "source_url": "https://cdn.deepcool.com/public/ProductFile/DEEPCOOL/Cooling/CPUAirCoolers/AK620/Gallery/800X800/01.jpg?auto=format,compress&q=90" },
+        { "file": "deepcool-ak620-angle.webp", "alt_text": "Кулер DeepCool AK620, дополнительный ракурс", "source_url": "https://cdn.deepcool.com/public/ProductFile/DEEPCOOL/Cooling/CPUAirCoolers/AK620/Gallery/800X800/02.jpg?auto=format,compress&q=90" }
+      ]
+    },
+    {
+      "name": "ARCTIC Liquid Freezer III 360 Black",
+      "slug": "arctic-liquid-freezer-iii-360-black",
+      "sku": "ACFRE00136A",
+      "category": "liquid-cooling",
+      "brand": "ARCTIC",
+      "description": "Готовая СЖО с радиатором 360 мм, тремя вентиляторами P12 и отдельным вентилятором для зоны VRM. Чёрная версия без подсветки.",
+      "detailed_description": "Liquid Freezer III 360 — замкнутая система охлаждения, не требующая сборки собственного контура. Толстый 38-мм радиатор и три вентилятора P12 рассчитаны на отвод тепла от производительного процессора. Водоблок оснащён вентилятором для области VRM. Перед покупкой проверьте место для радиатора вместе с вентиляторами и совместимость с материнской платой по списку ARCTIC.",
+      "price": 13990,
+      "stock": 12,
+      "orders_count": 477,
+      "specifications": { "Тип охлаждения": "Готовая СЖО (AIO)", "Радиатор": "360 мм", "Размеры радиатора": "398 × 120 × 38 мм", "Сокеты": "LGA1700 / AM5 / AM4", "Вентиляторы": "3 × 120 мм, P12 PWM PST", "Скорость вентиляторов": "200–1800 об/мин", "Вентилятор VRM": "Да", "Длина шлангов": "450 мм", "Подсветка": "Нет" },
+      "source_page": "https://www.arctic.de/en/Liquid-Freezer-III-360/ACFRE00136A",
+      "images": [
+        { "file": "arctic-liquid-freezer-iii-360.webp", "alt_text": "Система охлаждения ARCTIC Liquid Freezer III 360 Black", "source_url": "https://www.arctic.de/media/e0/ab/b6/1707469622/Liquid_Freezer_III_360_Black_G02_2.jpg" },
+        { "file": "arctic-liquid-freezer-iii-360-angle.webp", "alt_text": "ARCTIC Liquid Freezer III 360, дополнительный ракурс", "source_url": "https://www.arctic.de/media/30/75/14/1707469622/Liquid_Freezer_III_360_Black_G03_2.jpg" }
+      ]
+    },
+    {
+      "name": "Corsair iCUE H150i Elite Capellix XT",
+      "slug": "corsair-icue-h150i-elite-capellix-xt",
+      "sku": "CW-9060070-WW",
+      "category": "liquid-cooling",
+      "brand": "Corsair",
+      "description": "Готовая СЖО 360 мм с тремя вентиляторами AF120 RGB Elite, подсветкой Capellix и контроллером Commander Core.",
+      "detailed_description": "H150i Elite Capellix XT — закрытая система жидкостного охлаждения процессора с радиатором 360 мм. В комплект входят три вентилятора AF120 RGB Elite и контроллер Commander Core для управления охлаждением и подсветкой через iCUE. Эта СЖО не является набором для кастомного контура. Для установки нужны подходящие крепления, место в корпусе, питание SATA и внутренний USB-разъём.",
+      "price": 24990,
+      "stock": 9,
+      "orders_count": 459,
+      "specifications": { "Тип охлаждения": "Готовая СЖО (AIO)", "Радиатор": "360 мм", "Размеры радиатора": "397 × 120 × 27 мм", "Сокеты": "LGA1700 / LGA1200 / LGA115x / AM5 / AM4", "Вентиляторы": "3 × 120 мм, AF120 RGB Elite", "Скорость вентиляторов": "550–2100 об/мин", "Длина шлангов": "450 мм", "Подсветка": "RGB, Capellix", "Контроллер": "iCUE Commander Core" },
+      "source_page": "https://www.corsair.com/us/en/p/cpu-coolers/cw-9060070-ww/icue-h150i-elite-capellix-xt-liquid-cpu-cooler-cw-9060070-ww",
+      "images": [
+        { "file": "corsair-h150i-elite-capellix-xt.webp", "alt_text": "Corsair iCUE H150i Elite Capellix XT с радиатором 360 мм", "source_url": "https://assets.corsair.com/image/upload/c_pad,q_auto,h_1024,w_1024,f_auto/products/Custom-Cooling/CW-9060070-WW/-base-elite-capellix-xt-cooler-config-Gallery-H150i-ELITE-CAPELLIX-XT-01.webp" },
+        { "file": "corsair-h150i-elite-capellix-xt-angle.webp", "alt_text": "Corsair H150i Elite Capellix XT, дополнительный ракурс", "source_url": "https://assets.corsair.com/image/upload/c_pad,q_auto,h_1024,w_1024,f_auto/products/Custom-Cooling/CW-9060070-WW/-base-elite-capellix-xt-cooler-config-Gallery-H150i-ELITE-CAPELLIX-XT-02.webp" }
+      ]
+    },
+    {
+      "name": "Corsair Hydro X iCUE XH305i RGB PRO",
+      "slug": "corsair-hydro-x-icue-xh305i-rgb-pro",
+      "sku": "CX-9070008-WW",
+      "category": "custom-water-cooling",
+      "brand": "Corsair",
+      "description": "Комплект кастомного водяного охлаждения с помпой XD5, водоблоком XC7 RGB PRO, медным радиатором XR5 360 и жёсткими трубками 14 мм.",
+      "detailed_description": "XH305i RGB PRO — набор для самостоятельной сборки обслуживаемого водяного контура, а не готовая AIO-система. Он включает CPU-водоблок XC7 RGB PRO, помпу с резервуаром XD5, радиатор XR5 360, три вентилятора QL120 RGB, фитинги, жёсткие трубки и инструменты для их обработки. Перед сборкой необходимо проверить совместимость сокета и корпуса. Контур требует формовки трубок, проверки герметичности и регулярного обслуживания. Водоблок видеокарты не входит в комплект.",
+      "price": 74990,
+      "old_price": 79990,
+      "stock": 4,
+      "orders_count": 228,
+      "is_featured": 1,
+      "specifications": { "Тип охлаждения": "Кастомная СЖО, набор", "Водоблок CPU": "XC7 RGB PRO", "Помпа и резервуар": "XD5 RGB, D5", "Радиатор": "XR5 360, медный", "Вентиляторы": "3 × QL120 RGB, 120 мм", "Трубки": "XT Hardline, 14 мм", "Резьба фитингов": "G1/4", "Сокеты": "LGA1700 / LGA1200 / AM5 / AM4", "Подсветка": "RGB, iCUE", "Охлаждение видеокарты": "Водоблок приобретается отдельно", "Сборка и обслуживание": "Требуются" },
+      "source_page": "https://www.corsair.com/us/en/p/custom-liquid-cooling/cx-9070008-ww/hydro-x-series-icue-xh305i-rgb-pro-custom-cooling-kit-cx-9070008-ww",
+      "images": [
+        { "file": "corsair-hydro-x-xh305i-rgb-pro.webp", "alt_text": "Комплект кастомного водяного охлаждения Corsair Hydro X XH305i RGB PRO", "source_url": "https://assets.corsair.com/image/upload/c_pad,q_auto,h_1024,w_1024,f_auto/products/Custom-Cooling/base-icue-xh305i-rgb-pro-config/Gallery/XH305i_PRO_BLACK_01.webp" },
+        { "file": "corsair-hydro-x-xh305i-rgb-pro-components.webp", "alt_text": "Компоненты набора Corsair Hydro X XH305i RGB PRO", "source_url": "https://assets.corsair.com/image/upload/c_pad,q_auto,h_1024,w_1024,f_auto/products/Custom-Cooling/base-icue-xh305i-rgb-pro-config/Gallery/XH305i_PRO_BLACK_02.webp" }
+      ]
+    },
+    {
+      "name": "Corsair Hydro X iCUE XH303i RGB PRO",
+      "slug": "corsair-hydro-x-icue-xh303i-rgb-pro",
+      "sku": "CX-9070006-WW",
+      "category": "custom-water-cooling",
+      "brand": "Corsair",
+      "description": "Набор кастомной СЖО с компактной помпой XD3 RGB, CPU-водоблоком XC7 RGB PRO, радиатором XR5 360 и тремя вентиляторами SP120 RGB Elite.",
+      "detailed_description": "XH303i RGB PRO предназначен для ручной сборки открытого водяного контура с жёсткими трубками. Компактная помпа с резервуаром XD3 RGB помогает разместить систему в подходящем корпусе. В комплект входят XC7 RGB PRO, радиатор XR5 360, три вентилятора SP120 RGB Elite, трубки, фитинги и инструменты. Набор нужно самостоятельно собрать, заполнить и проверить на герметичность. Совместимость корпуса и сокета проверяется до покупки; GPU-водоблок приобретается отдельно.",
+      "price": 57990,
+      "stock": 5,
+      "orders_count": 383,
+      "is_featured": 1,
+      "specifications": { "Тип охлаждения": "Кастомная СЖО, набор", "Водоблок CPU": "XC7 RGB PRO", "Помпа и резервуар": "XD3 RGB, DDC", "Радиатор": "XR5 360, медный", "Вентиляторы": "3 × SP120 RGB Elite, 120 мм", "Трубки": "XT Hardline, 14 мм", "Резьба фитингов": "G1/4", "Сокеты": "LGA1700 / LGA1200 / AM5 / AM4", "Подсветка": "RGB, iCUE", "Охлаждение видеокарты": "Водоблок приобретается отдельно", "Сборка и обслуживание": "Требуются" },
+      "source_page": "https://www.corsair.com/us/en/p/custom-liquid-cooling/cx-9070006-ww/hydro-x-series-icue-xh303i-rgb-pro-custom-cooling-kit-cx-9070006-ww",
+      "images": [
+        { "file": "corsair-hydro-x-xh303i-rgb-pro.webp", "alt_text": "Комплект кастомного водяного охлаждения Corsair Hydro X XH303i RGB PRO", "source_url": "https://assets.corsair.com/image/upload/c_pad,q_auto,h_1024,w_1024,f_auto/products/Custom-Cooling/base-icue-xh303i-rgb-pro-config/Gallery/XH303i_PRO_BLACK_01.webp" },
+        { "file": "corsair-hydro-x-xh303i-rgb-pro-components.webp", "alt_text": "Компоненты набора Corsair Hydro X XH303i RGB PRO", "source_url": "https://assets.corsair.com/image/upload/c_pad,q_auto,h_1024,w_1024,f_auto/products/Custom-Cooling/base-icue-xh303i-rgb-pro-config/Gallery/XH303i_PRO_BLACK_02.webp" }
+      ]
+    },
+    {
+      "name": "Corsair Hydro X XC7 RGB PRO Black",
+      "slug": "corsair-hydro-x-xc7-rgb-pro-black",
+      "sku": "CX-9010015-WW",
+      "category": "custom-water-cooling",
+      "brand": "Corsair",
+      "description": "CPU-водоблок для кастомной СЖО с никелированным медным основанием, прозрачной камерой и RGB-подсветкой. Помпа и радиатор не входят в комплект.",
+      "detailed_description": "XC7 RGB PRO — отдельный процессорный водоблок для пользовательского водяного контура. Никелированное медное основание отводит тепло от процессора, прозрачная камера позволяет видеть жидкость, а RGB-подсветка управляется совместимым контроллером. Для работы необходимы помпа, резервуар, радиатор, трубки, фитинги G1/4 и подходящая охлаждающая жидкость. Это не самостоятельная система охлаждения и не готовая СЖО.",
+      "price": 11990,
+      "stock": 7,
+      "orders_count": 193,
+      "specifications": { "Тип охлаждения": "CPU-водоблок для кастомной СЖО", "Сокеты": "LGA1700 / LGA1200 / AM5 / AM4", "Материал основания": "Никелированная медь", "Резьба портов": "G1/4", "Подсветка": "RGB, 16 светодиодов", "Цвет": "Чёрный", "Помпа и радиатор в комплекте": "Нет", "Самостоятельная работа": "Только в составе водяного контура" },
+      "source_page": "https://www.corsair.com/us/en/p/custom-liquid-cooling/cx-9010015-ww/hydro-x-series-xc7-rgb-pro-cpu-water-block-1700-1200-am4-cx-9010015-ww",
+      "images": [
+        { "file": "corsair-hydro-x-xc7-rgb-pro.webp", "alt_text": "Процессорный водоблок Corsair Hydro X XC7 RGB PRO Black", "source_url": "https://assets.corsair.com/image/upload/c_pad,q_auto,h_1024,w_1024,f_auto/products/Custom-Cooling/CX-9010015-WW/Gallery/XC7_RGB_PRO_BLACK_01.webp" },
+        { "file": "corsair-hydro-x-xc7-rgb-pro-angle.webp", "alt_text": "Corsair Hydro X XC7 RGB PRO, дополнительный ракурс", "source_url": "https://assets.corsair.com/image/upload/c_pad,q_auto,h_1024,w_1024,f_auto/products/Custom-Cooling/CX-9010015-WW/Gallery/XC7_RGB_PRO_BLACK_02.webp" }
+      ]
+    },
+    {
+      "name": "Corsair Hydro X XF Hardline 14mm, 4 шт.",
+      "slug": "corsair-hydro-x-xf-hardline-14mm-4-pack",
+      "sku": "CX-9052008-WW",
+      "category": "custom-water-cooling",
+      "brand": "Corsair",
+      "description": "Набор из четырёх чёрных фитингов G1/4 для жёстких трубок с внешним диаметром 14 мм. Для сборки кастомного водяного контура.",
+      "detailed_description": "Фитинги Hydro X XF Hardline соединяют жёсткие трубки с водоблоками, радиаторами и другими компонентами с резьбой G1/4. В наборе четыре фитинга для трубок с внешним диаметром 14 мм. Они не предназначены для мягких шлангов или трубок другого диаметра. При сборке подготовьте ровные края трубок и проверьте герметичность контура до включения компьютера.",
+      "price": 2990,
+      "stock": 16,
+      "orders_count": 396,
+      "specifications": { "Тип": "Фитинг для жёстких трубок", "Диаметр трубок": "14 мм (внешний)", "Резьба": "G1/4", "Количество в комплекте": "4 шт.", "Цвет": "Чёрный", "Назначение": "Кастомный водяной контур" },
+      "source_page": "https://www.corsair.com/us/en/p/custom-liquid-cooling/cx-9052008-ww/hydro-x-series-xf-hardline-14mm-od-fitting-four-pack-aca-a-black-cx-9052008-ww",
+      "images": [
+        { "file": "corsair-hydro-x-xf-hardline-14mm.webp", "alt_text": "Фитинги Corsair Hydro X XF Hardline для жёстких трубок 14 мм", "source_url": "https://assets.corsair.com/image/upload/c_pad,q_85,h_608,w_608/products/Custom-Cooling/CX-9052008-WW/Gallery/XF_Hardline_14mm_Fitting_BLK_01.webp" }
+      ]
+    },
+    {
+      "name": "Corsair Hydro X XF Ball Valve Black",
+      "slug": "corsair-hydro-x-xf-ball-valve-black",
+      "sku": "CX-9055019-WW",
+      "category": "custom-water-cooling",
+      "brand": "Corsair",
+      "description": "Чёрный шаровой кран с портами G1/4 для организации слива жидкости из кастомной СЖО. Фитинги и заглушки приобретаются отдельно.",
+      "detailed_description": "Hydro X XF Ball Valve помогает организовать обслуживаемый сливной участок пользовательского водяного контура. Кран устанавливается с подходящими соединителями G1/4; фитинги, переходники и заглушки не входят в этот товар. Место установки выбирайте так, чтобы кран был доступен при обслуживании и не мешал другим компонентам. Перед запуском системы проверьте положение крана и герметичность соединений.",
+      "price": 2490,
+      "stock": 12,
+      "orders_count": 463,
+      "specifications": { "Тип": "Шаровой кран для СЖО", "Резьба портов": "G1/4", "Назначение": "Слив и обслуживание контура", "Цвет": "Чёрный", "Фитинги в комплекте": "Нет" },
+      "source_page": "https://www.corsair.com/us/en/p/custom-liquid-cooling/cx-9055019-ww/hydro-x-series-xf-ball-valve-aca-a-black-cx-9055019-ww",
+      "images": [
+        { "file": "corsair-hydro-x-xf-ball-valve.webp", "alt_text": "Шаровой кран Corsair Hydro X XF Ball Valve Black", "source_url": "https://assets.corsair.com/image/upload/c_pad,q_85,h_608,w_608/products/Custom-Cooling/CX-9055019-WW/Gallery/XF_Ball_Valve_BLK_01.webp" }
+      ]
+    }
+  ]
+}

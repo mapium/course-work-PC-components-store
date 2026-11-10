@@ -27,6 +27,10 @@ $total_spent = array_sum(array_column($orders, 'total_amount'));
 // Статистика
 $completed_orders = count(array_filter($orders, function($o) { return $o['status'] === 'delivered'; }));
 $pending_orders = count(array_filter($orders, function($o) { return in_array($o['status'], ['pending', 'processing', 'assembled', 'shipped'], true); }));
+$product_model = new \App\Models\Product($pdo);
+$recent_ids = \App\Helpers\BrowsingHistory::recentIds($pdo);
+$recent_products = $product_model->getByIds(array_slice($recent_ids, 0, \App\Helpers\BrowsingHistory::PROFILE_LIMIT));
+$recommended_products = $product_model->getRecommended(6, $recent_ids);
 $current_tab = \App\Helpers\Request::text($_GET, 'tab', 'orders');
 if (!in_array($current_tab, ['orders', 'profile', 'settings'], true)) {
     $current_tab = 'orders';
@@ -239,6 +243,23 @@ if (!in_array($current_tab, ['orders', 'profile', 'settings'], true)) {
                     </div>
                 </div>
             </div>
+            <?php
+            $account_return_to = '/account' . ($current_tab !== 'orders' ? '?tab=' . $current_tab : '');
+            $product_section = [
+                'id' => 'browsing-history', 'title' => 'История просмотров',
+                'description' => 'Последние просмотренные товары — от новых к более ранним. История сохраняется в вашем аккаунте.',
+                'products' => $recent_products, 'return_to' => $account_return_to,
+                'empty_message' => 'Вы ещё не просматривали товары. Откройте карточку в каталоге — она появится здесь.'
+            ];
+            include __DIR__ . '/includes/product-section.php';
+            $product_section = [
+                'id' => 'recommended-products', 'title' => 'Рекомендуемые товары',
+                'description' => $recent_ids ? 'Подборка с учётом просмотренных категорий и рекомендаций магазина.' : 'Выбранные товары магазина: популярные модели для вашей сборки.',
+                'products' => $recommended_products, 'return_to' => $account_return_to,
+                'empty_message' => 'Рекомендации появятся, когда в каталоге будут доступные товары.'
+            ];
+            include __DIR__ . '/includes/product-section.php';
+            ?>
         </div>
     </main>
 

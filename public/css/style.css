@@ -268,10 +268,25 @@ a:focus-visible,
 
 /* Карусель категорий */
 .categories-carousel-wrapper {
+    --carousel-fade-width: clamp(2rem, 8vw, 8rem);
     position: relative;
     overflow: hidden;
     margin: 2rem 0;
     padding: 1rem 0;
+    -webkit-mask-image: linear-gradient(
+        to right,
+        transparent,
+        #000 var(--carousel-fade-width),
+        #000 calc(100% - var(--carousel-fade-width)),
+        transparent
+    );
+    mask-image: linear-gradient(
+        to right,
+        transparent,
+        #000 var(--carousel-fade-width),
+        #000 calc(100% - var(--carousel-fade-width)),
+        transparent
+    );
 }
 
 .categories-carousel {
@@ -279,6 +294,7 @@ a:focus-visible,
     gap: 1.5rem;
     animation: scroll-carousel 20s linear infinite;
     width: max-content;
+    
 }
 
 .categories-carousel:hover {

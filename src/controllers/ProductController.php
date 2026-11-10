@@ -52,7 +52,9 @@ class ProductController {
             return;
         }
         try {
-            $products = $this->product_model->getAll($limit, $offset);
+            $sort = Request::text($_GET, 'sort', 'newest');
+            if (!isset(\App\Helpers\Catalog::SORTS[$sort])) $sort = 'newest';
+            $products = $this->product_model->getWithFilters(['sort' => $sort], $limit, $offset);
             Response::send(['success' => true, 'products' => $products, 'count' => count($products)]);
         } catch (\PDOException $exception) {
             Response::send(['success' => false, 'message' => 'Каталог временно недоступен'], 500);

@@ -237,6 +237,8 @@ if (strpos($path, '/api/') === 0) {
         if (!empty($input['specifications']) && is_array($input['specifications'])) {
             $filters['specifications'] = $input['specifications'];
         }
+        $sort = \App\Helpers\Request::text(is_array($input) ? $input : [], 'sort');
+        if (isset(\App\Helpers\Catalog::SORTS[$sort])) $filters['sort'] = $sort;
 
         $limit = !empty($input['limit']) ? (int)$input['limit'] : 100;
         $offset = !empty($input['offset']) ? (int)$input['offset'] : 0;
@@ -310,6 +312,9 @@ if ($path === '/') {
     include BASE_PATH . '/src/views/home.php';
 } elseif ($path === '/catalog') {
     include BASE_PATH . '/src/views/catalog.php';
+} elseif (in_array($path, ['/about', '/delivery', '/payment'], true)) {
+    $information_page = substr($path, 1);
+    include BASE_PATH . '/src/views/information.php';
 } elseif ($path === '/auth') {
     include BASE_PATH . '/src/views/auth.php';
 } elseif ($path === '/cart') {

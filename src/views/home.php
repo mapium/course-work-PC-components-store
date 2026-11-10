@@ -114,9 +114,11 @@
                 <button type="button" class="hero-carousel-dot" data-hero-dot="3" aria-label="Показать баннер 4 из 4"></button>
             </div>
         </section>
+        <div class="container"><h2>Категории товаров</h2></div>
         <section class="categories">
+            
             <div class="container">
-                <h2>Категории товаров</h2>
+                
                 <div class="categories-carousel-wrapper">
                     <div class="categories-carousel">
                         <?php
@@ -136,20 +138,18 @@
                 </div>
             </div>
         </section>
-        <section class="featured-products">
-            <div class="container">
-                <h2>Популярные товары</h2>
-                <div class="products-grid">
-                    <?php
-                    $featured = $product_model->getFeatured(6);
-                    $card_return_to = '/';
-                    foreach ($featured as $product):
-                    ?>
-                        <?php $card_product = $product; include __DIR__ . '/includes/product-card.php'; ?>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </section>
+        <div class="container">
+            <?php
+            $recent_ids = \App\Helpers\BrowsingHistory::recentIds($pdo);
+            $product_section = [
+                'id' => 'recommended-products', 'title' => 'Рекомендуемые товары',
+                'description' => $recent_ids ? 'Подборка с учётом просмотренных категорий и рекомендаций магазина.' : 'Выбранные товары магазина: популярные модели для вашей сборки.',
+                'products' => $product_model->getRecommended(6, $recent_ids), 'return_to' => '/',
+                'empty_message' => 'Рекомендации появятся, когда в каталоге будут доступные товары.'
+            ];
+            include __DIR__ . '/includes/product-section.php';
+            ?>
+        </div>
     </main>
 
     <?php include dirname(__FILE__) . '/includes/footer.php'; ?>

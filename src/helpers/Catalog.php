@@ -6,8 +6,9 @@ use App\Models\Category;
 use App\Models\Product;
 
 class Catalog {
-    const SORTS = ['relevance' => 'По соответствию запросу', 'newest' => 'Сначала новые', 'price_asc' => 'Сначала дешевле', 'price_desc' => 'Сначала дороже', 'rating' => 'По рейтингу'];
+    const SORTS = ['relevance' => 'По соответствию запросу', 'newest' => 'Сначала новые', 'popularity' => 'По популярности', 'price_asc' => 'Сначала дешевле', 'price_desc' => 'Сначала дороже', 'rating' => 'По рейтингу'];
     const PAGE_SIZE = 12;
+    const PAGE_SIZES = [12, 24, 36, 48];
 
     public static function load($pdo, $input, $category = null) {
         $model = new Product($pdo);
@@ -51,14 +52,17 @@ class Catalog {
         if (!isset(self::SORTS[$sort]) || ($sort === 'relevance' && $search === '')) $sort = 'newest';
         $filters['sort'] = $sort;
         if ($sort !== ($search !== '' ? 'relevance' : 'newest')) $params['sort'] = $sort;
+        $per_page = Request::integer($input, 'per_page', self::PAGE_SIZE);
+        if (!in_array($per_page, self::PAGE_SIZES, true)) $per_page = self::PAGE_SIZE;
+        if ($per_page !== self::PAGE_SIZE) $params['per_page'] = $per_page;
         $total = $model->countWithFilters($filters);
-        $pages = max(1, (int)ceil($total / self::PAGE_SIZE));
+        $pages = max(1, (int)ceil($total / $per_page));
         $page = max(1, min(1000000, Request::integer($input, 'page', 1)));
         $not_found = $page > $pages;
         if ($page > 1) $params['page'] = $page;
-        $products = $not_found ? [] : $model->getWithFilters($filters, self::PAGE_SIZE, ($page - 1) * self::PAGE_SIZE);
+        $products = $not_found ? [] : $model->getWithFilters($filters, $per_page, ($page - 1) * $per_page);
         $path = $category ? Url::categoryPath($category, $pdo) : '/catalog';
         $url = APP_URL . $path . ($params ? '?' . http_build_query($params) : '');
-        return compact('category', 'categories', 'selected', 'filters', 'params', 'brands', 'specs', 'sort', 'search', 'total', 'pages', 'page', 'products', 'path', 'url', 'not_found');
+        return compact('category', 'categories', 'selected', 'filters', 'params', 'brands', 'specs', 'sort', 'search', 'per_page', 'total', 'pages', 'page', 'products', 'path', 'url', 'not_found');
     }
 }

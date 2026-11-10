@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/xml; charset=utf-8');
 header('Cache-Control: public, max-age=300');
-$urls = [['url' => APP_URL . '/'], ['url' => APP_URL . '/catalog']];
+$urls = [['url' => APP_URL . '/'], ['url' => APP_URL . '/catalog'], ['url' => APP_URL . '/about'], ['url' => APP_URL . '/delivery'], ['url' => APP_URL . '/payment']];
 $category_model = new \App\Models\Category($pdo);
 foreach ($category_model->getTree() as $row) $urls[] = ['url' => \App\Helpers\Url::category($row, $pdo), 'modified' => $row['updated_at'] ?: ($row['created_at'] ?? null)];
 $ids = $category_model->descendantIds();

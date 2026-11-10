@@ -42,5 +42,5 @@
         <?php if (!$catalog['selected']): ?><p class="filter-help">Выберите категорию, чтобы увидеть её характеристики.</p><?php endif; ?>
     </div>
     <noscript><button type="submit" class="btn">Применить фильтры</button></noscript>
-    <a href="<?php echo htmlspecialchars(APP_URL . $catalog['path']); ?>" data-catalog-link id="reset-filters" class="btn btn-secondary">Сбросить</a>
+    <a href="<?php echo htmlspecialchars(APP_URL . $catalog['path'] . ($catalog['per_page'] !== \App\Helpers\Catalog::PAGE_SIZE ? '?per_page=' . $catalog['per_page'] : '')); ?>" data-catalog-link id="reset-filters" class="btn btn-secondary">Сбросить</a>
 </form>
